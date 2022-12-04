@@ -1,8 +1,4 @@
 phcsh_mpl <- function(formula, risk, data, control, ...){
-  library(survival)
-  library(statmod)
-  library(splines2)
-  library(Matrix)
   valid = 1
   mc = match.call(expand.dots = FALSE)
   m = match(c("formula", "data"), names(mc), 0)
@@ -19,10 +15,10 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   mc[[1]] = as.name("model.frame")
   mc$formula = if (missing(data))
     terms(formula)
-  else terms(formula, data = data)
+  else stats::terms(formula, data = data)
   mf = eval(mc, parent.frame())
   mf_indx <- as.numeric(row.names(mf))
-  y = model.extract(mf, "response")
+  y = stats::model.extract(mf, "response")
   if (nrow(mf) == 0)
     stop("No (non-missing) observations")
   mt = attr(mf, "terms")
@@ -35,7 +31,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
     right = rep(NA, nrow(y))
     icase = which(y[, 2] == 1)
     right[icase] = y[icase, 1]
-    y = Surv(left, right, type = "interval2")
+    y = survival::Surv(left, right, type = "interval2")
   }
   else if (type != "interval") {
     stop("\nPlease create the survival object using the option type='interval2'
@@ -44,7 +40,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   n = nrow(mf)
   extraArgs <- list(...)
   if(length(extraArgs)){
-    controlArgs <- names(formals(phcsh_mpl.control))
+    controlArgs <- names(formals(phcsh_mpl_control))
     m <- pmatch(names(extraArgs), controlArgs, nomatch = 0L)
     if (any(m == 0L))
       stop(gettextf("Argument(s) %s not matched", names(extraArgs)[m ==
@@ -55,7 +51,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   #index <- as.numeric(row.names(mf))
   index = as.vector(row(mf)[,1])
   row(mf)
-  X = model.matrix(mt, mf)
+  X = stats::model.matrix(mt, mf)
   X = X[, !apply(X, 2, function(x) all(x == x[1])), drop = FALSE]
   if (ncol(X) == 0) {
     X = matrix(0, n, 1)
@@ -86,13 +82,13 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   gq.points = control$gq.points
   dgr = control$dgr
   basis.intercept = control$basis.intercept
-  gq <- gauss.quad(gq.points, "legendre")
+  gq <- statmod::gauss.quad(gq.points, "legendre")
   psif <- function(x, bknots, iknots){
-    mSpline(x, knots = iknots, Boundary = bknots, degree = dgr,
+    splines2::mSpline(x, knots = iknots, Boundary = bknots, degree = dgr,
             intercept = basis.intercept)
   }
   PSIf <- function(x, bknots, iknots)
-    iSpline(x, knots = iknots, Boundary = bknots, degree = dgr,
+    splines2::iSpline(x, knots = iknots, Boundary = bknots, degree = dgr,
             intercept = basis.intercept)
   te <- xe <- tl <- xl <- til <- tir <- xi <- n.e <- n.l <- n.i <- list()
   n.per.risk <- n.iknots <- i.knots <- perc.iknots <- t.all.r <- list()
@@ -149,7 +145,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
     else
       perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
                              length.out = n.iknots[[q]])
-    i.knots[[q]]  = quantile(unique(t.all.r[[q]]), prob = perc.iknots[[q]],
+    i.knots[[q]]  = stats::quantile(unique(t.all.r[[q]]), prob = perc.iknots[[q]],
                              names = FALSE, na.rm = TRUE, type = 3)
     if(!is.null(control$iknots.pos)){
       i.knots[[q]] = control$iknots.pos[[q]]
@@ -173,9 +169,9 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
           kntset = xknots[xknots >= xknots[jj] & xknots <= xknots[ii+dgr]]
           kntsum = 0
           for(kk in 1:(length(kntset) - 1)){
-            kntsum = kntsum + mSpline(kntset[kk], knots = i.knots[[q]],
+            kntsum = kntsum + splines2::mSpline(kntset[kk], knots = i.knots[[q]],
                                       degree = dgr, intercept = basis.intercept,
-                                      Boundary.knots = b.knots, derivs = 2)[ii]*mSpline(
+                                      Boundary.knots = b.knots, derivs = 2)[ii]*splines2::mSpline(
                                         kntset[kk], knots = i.knots[[q]], degree = dgr,
                                         intercept = basis.intercept, Boundary.knots = b.knots,
                                         derivs = 2)[jj]*(kntset[kk + 1] - kntset[kk])
@@ -358,7 +354,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
     theta.den.1[[q]] = matrix(1, ncol = 1, nrow = n.r + sum(unlist(n.e)) +
                                 sum(unlist(n.i)))
   }
-  hess.AA.x.diag = as.matrix(bdiag(hess.AA.x))
+  hess.AA.x.diag = as.matrix(Matrix::bdiag(hess.AA.x))
   updhessian = function(ti.S.gq.q, ti.h.q, gq.points, n.i, ti.gq.H0.qr,
                         xi.exb.qr, ti.rml.gq.w, ti.gq.psi.qr, ti.gq.PSI.qr, tr.H.q,
                         te.H.qr, ti.F.q, ti.A.qr, tr.PSI, te.PSI.qr, ti.B1.qr,
@@ -564,7 +560,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
     for(r in 1:n.risk){
       hess.AA.t.mat = hess.AB.t.mat = list()
       for(t in 1:n.risk){
-        hess.AA.t.mat[[t]] = Diagonal(x = c(if(r==t){if(length(tr)!=0)
+        hess.AA.t.mat[[t]] = Matrix::Diagonal(x = c(if(r==t){if(length(tr)!=0)
           -tr.H.q[[t]]} else{rep(0, n.r)},
           if(r==t){unlist(mapply(function(a,b) if(a!=0)
             -b[[t]], n.e, te.H.qr, SIMPLIFY = FALSE))}
@@ -892,7 +888,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
       }
     }
 
-    lambdaR = as.matrix(bdiag(mapply(function(a,b)  as.vector(a)*b, oldlambda,
+    lambdaR = as.matrix(Matrix::bdiag(mapply(function(a,b)  as.vector(a)*b, oldlambda,
                                      R.mat, SIMPLIFY = FALSE)))
     hess.BB = hess.BB.mat - 2*lambdaR
     BB.mat.pen = BB.mat - 2*lambdaR
