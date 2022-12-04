@@ -14,7 +14,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   }
   mc[[1]] = as.name("model.frame")
   mc$formula = if (missing(data))
-    terms(formula)
+    stats::terms(formula)
   else stats::terms(formula, data = data)
   mf = eval(mc, parent.frame())
   mf_indx <- as.numeric(row.names(mf))
@@ -1082,7 +1082,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
       active.r[[r]] = which(active[[r]] %in% 1)
       nonactive.n[[r]] = n.basis[[r]] - sum(active[[r]])
       nonactive.r.index[[r]] = seq(from = if(r==1) 1
-                                   else tail(nonactive.r.index[[r-1]],n=1)+1,
+                                   else rotation::tail(nonactive.r.index[[r-1]],n=1)+1,
                                    by = 1, length.out = nonactive.n[[r]])
     }
     active.index = which(unlist(active)) + n.risk*p
