@@ -51,7 +51,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
                                                                      0L]), domain = NA, call. = F)
   }
   if(missing(control))
-    control <- phcsh_mpl.control(...)
+    control <- phcsh_mpl_control(...)
   #index <- as.numeric(row.names(mf))
   index = as.vector(row(mf)[,1])
   row(mf)
