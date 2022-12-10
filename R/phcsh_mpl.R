@@ -574,6 +574,150 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
                   ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
                 }
               }
+              xj = c(xj.r, xj.e, xj.i)
+              xk = c(xk.r, xk.e, xk.i)
+              AA.elem = c(AA.tr, AA.te, AA.ti)
+              AA.temp = t(xj) %*% diag(AA.elem) %*% xk
+            }
+            else{
+              xj.i = xk.i = AA.ti = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i, xi[[q]][, j])
+                  xk.i = c(xk.i, xi[[q]][, k])
+                  AA.ti = c(AA.ti, as.vector((ti.F.q[[q]] *
+                  ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
+                  ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
+                }
+              }
+              xj = xj.i
+              xk = xk.i
+              AA.elem = AA.ti
+              AA.temp = t(xj) %*% diag(AA.elem) %*% xk
+            }
+            AA.mat[AA.count1, AA.count2] = AA.temp
+            AA.count2 = AA.count2 + 1
+          }
+        }
+        AA.count1 = AA.count1 + 1
+        AA.count2 = 1
+      }
+    }
+    hess.AB.rjtu = list()
+    for(r in 1:n.risk){
+      hess.AB.jtu = list()
+      for(j in 1:p){
+        hess.AB.tu = list()
+        for(t in 1:n.risk){
+          hess.AB.u = list()
+          for(u in 1:n.basis[[t]]){
+            hess.AB.u[[u]] = sum(c(if(r==t){if(length(tr)!=0)
+            -tr.PSI[[t]][,u]*xr[,j]*xr.exb.q[[t]]} else{rep(0,n.r)},
+            if(r==t){unlist(mapply(function(a,b,c,d) if(d!=0)
+            -a[[t]][,u]*b[,j]*c[[t]], te.PSI.qr, xe, xe.exb.qr, n.e,
+            SIMPLIFY = FALSE))},
+            unlist(mapply(function(a,b,c,d,e,f,g,h) if(h!=0) {f[,j]*g[[t]]*(
+            (a*b[[r]][[t]][,u]) - (c[[r]]*(d[[t]][,u] - e[[t]][,u]))) / a^2},
+            ti.F.q, ti.AB.qrjtu, ti.A.qr, ti.B1.qr, ti.B2.qr, xi, xi.exb.qr,
+            n.i, SIMPLIFY = FALSE))))
+          }
+          hess.AB.tu[[t]] = Reduce("rbind",hess.AB.u)
+        }
+        hess.AB.jtu[[j]] = Reduce("rbind",hess.AB.tu)
+      }
+      hess.AB.rjtu[[r]] = Reduce("cbind",hess.AB.jtu)
+    }
+    AB.mat = matrix(0, nrow = p*n.risk, ncol = sum(unlist(n.basis)))
+    AB.count1 = 1
+    AB.count2 = 1
+    for(r in 1:n.risk){
+      for(j in 1:p){
+        for(t in 1:n.risk){
+          for(z in 1:n.basis[[t]]){
+            if(r==t){
+              AB.exb.r <- xr.exb.q[[t]]
+              if(n.r != 0) AB.tr <- -tr.PSI[[t]][,z]
+              else AB.tr = vector()
+              xj.e <- xj.i <- AB.exb.e <- AB.exb.i <- AB.te <- AB.ti <- vector()
+              for(q in 1:n.risk){
+                if(n.e[[q]] != 0){
+                  xj.e = c(xj.e, xe[[q]][,j])
+                  AB.exb.e = c(AB.exb.e, xe.exb.qr[[q]][[t]])
+                  AB.te = c(AB.te, -te.PSI.qr[[q]][[t]][,z])
+                }
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i, xi[[q]][,j])
+                  AB.exb.i = c(AB.exb.i, xi.exb.qr[[q]][[t]])
+                  AB.ti = c(AB.ti, ((ti.F.q[[q]]*ti.AB.qrjtu[[q]][[r]][[t]][,z])
+                  - (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
+                  ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
+                }
+              }
+              xj = c(xj.r, xj.e, xj.i)
+              AB.elem = c(AB.tr, AB.te, AB.ti)
+              AB.exb = c(AB.exb.r, AB.exb.e, AB.exb.i)
+              AB.temp = t(xj) %*% diag(AB.elem) %*% AB.exb
+            }
+            else{
+              xj.i = AB.exb.i = AB.ti  = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i,xi[[q]][,j])
+                  AB.exb.i = c(AB.exb.i, xi.exb.qr[[q]][[t]])
+                  AB.ti = c(AB.ti,((ti.F.q[[q]]*ti.AB.qrjtu[[q]][[r]][[t]][,z]) -
+                  (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
+                  ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
+                }
+              }
+              xj = xj.i
+              AB.elem = AB.ti
+              exb = AB.exb.i
+              AB.temp = t(xj) %*% diag(AB.elem) %*% exb
+            }
+            AB.mat[AB.count1, AB.count2] = AB.temp
+            AB.count2 = AB.count2 + 1
+          }
+        }
+        AB.count1 = AB.count1 + 1
+        AB.count2 = 1
+      }
+    }
+    hess.AB = Reduce("cbind", hess.AB.rjtu)
+    hess.BB.rtuz.mat = list()
+    for(r in 1:n.risk){
+      hess.BB.tuz.mat = list()
+      for(u in 1:n.basis[[r]]){
+        hess.BBtz.mat = list()
+        for(t in 1:n.risk){
+          hess.BBz.mat = list()
+          for(z in 1:n.basis[[t]]){
+            hess.BBz.mat[[z]] = sum(c(if(r==t & n.e[[r]]!=0)
+            {-te.psi.qr[[r]][[r]][,u]*te.psi.qr[[t]][[t]][,z]/te.h0.q[[r]]^2}
+            else{rep(0, n.e[[r]])}, unlist(mapply(function(a,b,c,d,e,f,g)
+            if(g!=0) {f[[r]] * f[[t]] * (((a * (b[[r]][[t]][[u]][[z]] -
+            c[[r]][[t]][[u]][[z]])) - (d[[r]][,u] - e[[r]][,u]) * (d[[t]][,z] -
+            e[[t]][,z]))) / a^2}, ti.F.q, ti.BB1.qrutz, ti.BB2.qrutz, ti.B1.qr,
+            ti.B2.qr, xi.exb.qr, n.i, SIMPLIFY = FALSE))))
+          }
+          hess.BBtz.mat[[t]] = Reduce("rbind", hess.BBz.mat)
+        }
+        hess.BB.tuz.mat[[u]] = Reduce("rbind", hess.BBtz.mat)
+      }
+      hess.BB.rtuz.mat[[r]] = Reduce("cbind", hess.BB.tuz.mat)
+    }
+    hess.BB.mat = Reduce("cbind", hess.BB.rtuz.mat)
+    BB.mat = matrix(0, nrow = sum(unlist(n.basis)), ncol = sum(unlist(n.basis)))
+    BB.count1 = 1
+    BB.count2 = 1
+    for(r in 1:n.risk){
+      for(u in 1:n.basis[[r]]){
+        for(t in 1:n.risk){
+          for(z in 1:n.basis[[t]]){
+            BB.exb.r.e = BB.exb.t.e = BB.te = vector()
+            if(r==t){
+              if(n.e[[r]] != 0){
+
+              }
             }
           }
         }
