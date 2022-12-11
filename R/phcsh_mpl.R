@@ -100,6 +100,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   dgr = control$dgr
   basis.intercept = control$basis.intercept
   gq <- statmod::gauss.quad(gq.points, "legendre")
+  valid=1
   psif <- function(x, bknots, iknots){
     splines2::mSpline(x, knots = iknots, Boundary = bknots, degree = dgr,
             intercept = basis.intercept)
