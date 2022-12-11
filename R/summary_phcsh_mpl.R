@@ -1,3 +1,4 @@
+#' @export
 summary_phcsh_mpl <- function(object, sand = FALSE){
   if(sand == FALSE){
     col.names = c("Estimate", "Std. Error", "z-value", "Pr(>|z|)",

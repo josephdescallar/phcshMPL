@@ -1,3 +1,4 @@
+#' @export
 plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
                   sand = FALSE, n.points = 1000){
   r = risk
