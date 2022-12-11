@@ -226,6 +226,8 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
     ti.gq.psi.qr[[q]] = ti.gq.psi.r
     te.psi.qr[[q]] = te.psi.r
   }
+  max.outer = control$max.outer
+  max.iter = control$max.iter
   updbase <- function(theta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
                       ti.gq.PSI.qr){
     tr.H0.q = te.h0.q = ti.h0.q = ti.h0.q.l = te.H0.qr = ti.gq.H0.qr = list()
@@ -716,14 +718,355 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
             BB.exb.r.e = BB.exb.t.e = BB.te = vector()
             if(r==t){
               if(n.e[[r]] != 0){
-
+                BB.exb.r.e = rep(1, n.e[[r]])
+                BB.exb.t.e = rep(1, n.e[[r]])
+                BB.te = -(te.psi.qr[[r]][[r]][,u]*te.psi.qr[[r]][[r]][,z]) /
+                te.h0.q[[r]]^2
+              }
+              BB.exb.r.i = BB.exb.t.i = BB.ti = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  BB.exb.r.i = c(BB.exb.r.i, xi.exb.qr[[q]][[r]])
+                  BB.exb.t.i = c(BB.exb.t.i, xi.exb.qr[[q]][[t]])
+                  BB.ti = c(BB.ti, (((ti.F.q[[q]] *
+                  (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
+                  ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
+                  (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
+                  (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
+                  ti.F.q[[q]]^2)
+                }
               }
             }
+            else{
+              BB.exb.r.i = BB.exb.t.i = BB.ti = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  BB.exb.r.i = c(BB.exb.r.i, xi.exb.qr[[q]][[r]])
+                  BB.exb.t.i = c(BB.exb.t.i, xi.exb.qr[[q]][[t]])
+                  BB.ti = c(BB.ti, (((ti.F.q[[q]] *
+                  (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
+                  ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
+                  (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
+                  (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
+                  ti.F.q[[q]]^2)
+                }
+              }
+            }
+            BB.exb.r = c(BB.exb.r.e, BB.exb.r.i)
+            BB.exb.t = c(BB.exb.t.e, BB.exb.t.i)
+            BB.elem = c(BB.te, BB.ti)
+            BB.temp = t(BB.exb.r) %*% diag(BB.elem) %*% BB.exb.t
+            BB.mat[BB.count1, BB.count2] = BB.temp
+            BB.count2 = BB.count2 + 1
           }
         }
+        BB.count1 = BB.count1 + 1
+        BB.count2 = 1
       }
     }
+    lambdaR = as.matrix(Matrix::bdiag(mapply(function(a,b)  as.vector(a)*b,
+              oldlambda, R.mat, SIMPLIFY = FALSE)))
+    hess.BB = hess.BB.mat - 2*lambdaR
+    BB.mat.pen = BB.mat - 2*lambdaR
+    hess.old = cbind(rbind(hess.AA, hess.AB), rbind(t(hess.AB), hess.BB))
+    hess = cbind(rbind(AA.mat, t(AB.mat)), rbind(AB.mat, BB.mat.pen))
+    hess.no.pen = cbind(rbind(AA.mat, t(AB.mat)), rbind(AB.mat, BB.mat))
+    rlist = list("hess"=hess, "hess.no.pen"=hess.no.pen)
   }
+  betascore.mat = betascore = betahess.mat = betahess = betainc = list()
+  num.mat = num.exb = thetascore.num = den.mat = den.exb = list()
+  thetascore.den = dJ = thetascore.half = list()
+  for(outer in 1:max.outer){
+    for(iter in 1:max.iter){
+      if(control$iter.disp==TRUE)
+        cat("Outer iteration", outer, "of", max.outer, ": Inner iteration",
+        iter, "of",max.iter, "\r")
+      prev.oldbeta <- oldbeta
+      prev.oldtheta <- oldtheta
+      base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
+             ti.gq.PSI.qr)
+      llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+      base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w)
+      R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
+      oldlambda, SIMPLIFY = FALSE)
+      llik0 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
+              -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+              -sum(unlist(R.pen)), na.rm = TRUE)
+      for(r in 1:n.risk){
+        base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
+               te.PSI.qr, ti.gq.PSI.qr)
+        llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi,
+                  base$te.h0.q, base$te.H0.qr, base$ti.h0.q,
+                  base$ti.gq.S0r.qr, ti.rml.gq.w)
+        betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
+                    base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
+        betascore.mat[[r]] = diag(c(if(length(tr)!=0) -llparms$tr.H.q[[r]],
+                             rep(1, n.e[[r]]), unlist(mapply(function(a,b)
+                             if(a!=0) -b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
+                             FALSE)), unlist(mapply(function(a,b,c)
+                             if(a!=0) b[[r]] / c, n.i, betaparms$ti.A.qr,
+                              llparms$ti.F.q, SIMPLIFY = FALSE))))
+        betascore[[r]] = t(betascore.X[[r]]) %*% betascore.mat[[r]] %*%
+                         betascore.1[[r]]
+        betahess.mat[[r]] = diag(c(if(length(tr)!=0) llparms$tr.H.q[[r]],
+                            unlist(mapply(function(a,b) if(a!=0) b[[r]], n.e,
+                            llparms$te.H.qr, SIMPLIFY = FALSE)),
+                            unlist(mapply(function(a,b,c) if(a!=0) (b[[r]] / c) ^ 2,
+                            n.i, betaparms$ti.A.qr, llparms$ti.F.q,
+                            SIMPLIFY = FALSE))))
+        betahess[[r]] = solve(t(betahess.X[[r]]) %*% betahess.mat[[r]] %*%
+                                betahess.X[[r]])
+        betainc[[r]] = betahess[[r]] %*% betascore[[r]]
+        newbeta[[r]] = oldbeta[[r]] + as.vector(betainc[[r]])
+        llik1 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
+                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                    -sum(unlist(R.pen)), na.rm = TRUE)
+        ome = 0.6
+        while(llik1 <= llik0){
+          newbeta[[r]] = oldbeta[[r]] + (ome * as.vector(betainc[[r]]))
+          llparms = updllparms(newbeta, xr, xe, base$tr.H0.q, xi,
+                    base$te.h0.q, base$te.H0.qr, base$ti.h0.q,
+                    base$ti.gq.S0r.qr, ti.rml.gq.w)
+          llik1 = sum(-unlist(llparms$tr.H.q),
+                  log(unlist(llparms$te.h.q)+1e-12),
+                  -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                  -sum(unlist(R.pen)), na.rm = TRUE)
+          if(ome >= 1e-2) ome = ome * 0.6
+          else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
+          else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
+          else break
+        }
+        llik0 = llik1
+        oldbeta = newbeta
+      }
+      R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
+              oldlambda, SIMPLIFY = FALSE)
+      llik1 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
+                  -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                  -sum(unlist(R.pen)), na.rm = TRUE)
+      for(r in 1:n.risk){
+        base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
+               te.PSI.qr, ti.gq.PSI.qr)
+        llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                  base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w)
+        thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
+                     ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
+        num.mat[[r]] = Reduce("rbind", list(if(n.e[[r]]!=0) te.psi[[r]] /
+                       as.vector(base$te.h0.q[[r]]), Reduce("rbind",
+                       mapply(function(a,b,c) if(a!=0) b[[r]] / as.vector(c),
+                       n.i, thetaparms$ti.B1.qr, llparms$ti.F.q,
+                       SIMPLIFY = FALSE))))
+        dJ[[r]] = 2*(oldtheta[[r]] %*% R.mat[[r]])
+        num.exb[[r]] = Reduce("rbind", list(matrix(1, nrow = n.e[[r]],
+                       ncol = 1), Reduce("rbind", mapply(function(a,b) if(a!=0)
+                       {b[[r]]}, n.i, llparms$xi.exb.qr,
+                       SIMPLIFY = FALSE))))
+        thetascore.num[[r]] = (as.vector(t(theta.num.1[[r]]) %*%
+                              (num.mat[[r]]*as.vector(num.exb[[r]])))) -
+                              as.vector(oldlambda[[r]]) * pmin(dJ[[r]], 0) +
+                              1e-12
+        den.mat[[r]] = Reduce("rbind", list(if(length(tr)!=0) tr.PSI[[r]],
+                       Reduce("rbind", mapply(function(a,b) if(a!=0) b[[r]],
+                       n.e, te.PSI.qr, SIMPLIFY = FALSE)),
+                       Reduce("rbind", mapply(function(a,b,c) if(a!=0)
+                       {b[[r]] / c}, n.i, thetaparms$ti.B2.qr, llparms$ti.F.q,
+                       SIMPLIFY = FALSE))))
+        den.exb[[r]] = Reduce("rbind",  list(if(length(tr)!=0)
+          llparms$xr.exb.q[[r]], Reduce("rbind",
+          mapply(function(a,b) if(a!=0) b[[r]], n.e, llparms$xe.exb.qr,
+          SIMPLIFY = FALSE)),  Reduce ("rbind",
+          mapply(function(a,b) if(a!=0) b[[r]],
+          n.i, llparms$xi.exb.qr, SIMPLIFY = FALSE))))
+        thetascore.den[[r]] = as.vector(t(theta.den.1[[r]]) %*%
+                              (den.mat[[r]] * as.vector(den.exb[[r]]))) +
+                              as.vector(oldlambda[[r]]) * pmax(dJ[[r]], 0) +
+                              1e-12
+        thetascore.half[[r]] = oldtheta[[r]]*(thetascore.num[[r]] /
+                               thetascore.den[[r]])
+        newtheta[[r]] = as.vector(oldtheta[[r]] + (thetascore.half[[r]] -
+                        oldtheta[[r]]))
+        base = updbase(newtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
+               te.PSI.qr, ti.gq.PSI.qr)
+        llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                  base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w)
+        R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, newtheta, R.mat,
+                oldlambda, SIMPLIFY = FALSE)
+        llik2 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
+                -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                -sum(unlist(R.pen)), na.rm = TRUE)
+        ome = 0.6
+        while(llik2 <= llik1){
+          newtheta[[r]] = as.vector(oldtheta[[r]] + ome *
+                          (thetascore.half[[r]] - oldtheta[[r]]))
+          base = updbase(newtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
+                 te.PSI.qr, ti.gq.PSI.qr)
+          llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                    base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr,
+                    ti.rml.gq.w)
+          R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, newtheta, R.mat,
+                  oldlambda, SIMPLIFY = FALSE)
+          llik2 = sum(-unlist(llparms$tr.H.q),
+                      log(unlist(llparms$te.h.q)+1e-12),
+                      -unlist(llparms$te.H.qr),
+                      log(unlist(llparms$ti.F.q)+1e-12),
+                      -sum(unlist(R.pen)), na.rm = TRUE)
+          if (ome >= 1e-2) ome = ome * 0.6
+          else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
+          else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
+          else break
+        }
+        llik1 = llik2
+        oldtheta = newtheta
+      }
+      if(((max(mapply(function(a,b) abs(a - b), oldbeta, prev.oldbeta)) <
+           control$inner.conv) & (max(mapply(function(a,b) max(abs(a - b)),
+                                             oldtheta, prev.oldtheta)) < control$inner.conv))) {
+        break
+      }
+    } #inner
+    if(control$iter.disp == TRUE) cat("\n")
+    base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
+                   te.PSI.qr, ti.gq.PSI.qr)
+    llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                         base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr,
+                         ti.rml.gq.w)
+    betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
+                             base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
+    thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
+                               ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
+    hessupd = updhessian(llparms$ti.S.gq.q, llparms$ti.h.q, gq.points,
+              n.i, base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w,
+              ti.gq.psi.qr, ti.gq.PSI.qr, llparms$tr.H.q, llparms$te.H.qr,
+              llparms$ti.F.q, betaparms$ti.A.qr, tr.PSI, te.PSI.qr,
+              thetaparms$ti.B1.qr, thetaparms$ti.B2.qr, te.psi.qr, oldtheta,
+              llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat)
+    hessian = hessupd$hess
+    theta.gradient = active.theta = active.gradient = active = list()
+    active.r = nonactive.r.index = nonactive.n = list()
+    for(r in 1:n.risk){
+      theta.gradient[[r]] = thetascore.num[[r]] - thetascore.den[[r]]
+      active.theta[[r]] = oldtheta[[r]] < 1e-2
+      active.gradient[[r]] = theta.gradient[[r]] < -0.01
+      active[[r]] = active.theta[[r]]==1 & active.gradient[[r]]==1
+      active.r[[r]] = which(active[[r]] %in% 1)
+      nonactive.n[[r]] = n.basis[[r]] - sum(active[[r]])
+      nonactive.r.index[[r]] = seq(from = if(r==1) 1
+                               else utils::tail(nonactive.r.index[[r-1]],n=1)+1,
+                               by = 1, length.out = nonactive.n[[r]])
+    }
+    active.index = which(unlist(active)) + n.risk*p
+    beta.index = seq(1,(n.risk*p),1)
+    if(length(active.index)!=0){
+      G.QR.inv = solve(-hessian[-active.index, -active.index])
+      pos.def = if(min(eigen(-hessian[-active.index,
+                -active.index])$values) < 0) 0
+      else 1
+    }
+    else{
+      G.QR.inv = solve(-hessian)
+      pos.def = if(min(eigen(-hessian)$values) < 0) 0
+      else 1
+    }
+    if(pos.def==0) valid = 0
+    if(pos.def==0 & control$aps == TRUE){
+      if(control$iter.disp == TRUE){
+        cat("\nWarning: Estimation terminated early at outer iteration", outer,
+            "\n")
+        cat("Hessian matrix is not positive definite, penalty value cannot be
+          computed\n")
+      }
+      break
+    }
+    G.QR.inv.theta = G.QR.inv[-beta.index, -beta.index]
+    G.QR.inv.r = R.sigma = oldsigma = vr = R.sigma.r = newsigma = list()
+    newdf = newlambda = list()
+    for(r in 1:n.risk){
+      G.QR.inv.r[[r]] = G.QR.inv.theta[nonactive.r.index[[r]],
+                        nonactive.r.index[[r]]]
+      oldsigma[[r]] = 1 / (2*oldlambda[[r]])
+      R.sigma[[r]] = R.mat[[r]] / as.vector(oldsigma[[r]])
+      R.sigma.r[[r]] = if(sum(active[[r]])==0) R.sigma[[r]]
+      else R.sigma[[r]][-active.r[[r]], -active.r[[r]]]
+      vr[[r]] = sum(diag(G.QR.inv.r[[r]] %*% R.sigma.r[[r]]))
+      newdf[[r]] = n.basis[[r]] - vr[[r]]
+      if(newdf[[r]] < 0) newdf[[r]] = 1
+      newsigma[[r]] = (t(oldtheta[[r]]) %*% R.mat[[r]] %*% oldtheta[[r]]) /
+        newdf[[r]]
+      newlambda[[r]] = 1 / (2*newsigma[[r]])
+    }
+    if(control$aps == TRUE){
+      if(outer != 1){
+        if(abs(max(unlist(olddf) - unlist(newdf))) < 1) break
+        else{
+          oldlambda = newlambda
+          olddf = newdf
+        }
+      }
+      else {
+        oldlambda = newlambda
+        olddf = newdf
+      }
+    }
+    else break
+  } #outer
+  n.parms = n.risk*p + sum(unlist(n.basis))
+  if(length(active.index)!=0){
+    VarCovMat.temp = solve(-hessian[-active.index, -active.index])
+    nr = nrow(VarCovMat.temp)
+    VarCovMat.temp.1 = rbind(VarCovMat.temp, 0)[replace(rep(nr + 1L, nr +
+    length(active.index)), -active.index, seq_len(nr)), ]
+    VarCovMat = cbind(VarCovMat.temp.1, 0)[, replace(rep(nr + 1L, nr +
+    length(active.index)), -active.index, seq_len(nr))]
+  }
+  else{
+    VarCovMat = solve(-hessian)
+  }
+  sand = VarCovMat %*% (-hessupd$hess.no.pen) %*% VarCovMat
+  se = sqrt(diag(VarCovMat))
+  se.sand = sqrt(diag(sand))
+  seB.index = seT.index = theta.index = seB = seT = seB.sand = seT.sand = list()
+  for(r in 1:n.risk){
+    if(r==1){
+      seB.index[[r]] = seq(1,p,1)
+      seT.index[[r]] = seq(n.risk*p+1, by=1, length.out = n.basis[[r]])
+    }
+    else{
+      seB.index[[r]] = seq(utils::tail(seB.index[[r-1]]+1,1), by = 1,
+                       length.out = p)
+      seT.index[[r]] = seq(utils::tail(seT.index[[r-1]]+1,1), by = 1,
+                       length.out = n.basis[[r]])
+    }
+    seB[[r]] = se[seB.index[[r]]]
+    seT[[r]] = se[seT.index[[r]]]
+    seB.sand[[r]] = se.sand[seB.index[[r]]]
+    seT.sand[[r]] = se.sand[seT.index[[r]]]
+  }
+  fit <- list("beta" = oldbeta,"theta" = oldtheta,oldlambda,outer,iter)
+  fit$data = list(X = X)
+  fit$n.risk = n.risk
+  fit$seB = seB
+  fit$seT = seT
+  fit$beta.gradient = betascore
+  fit$theta.gradient = mapply(function(a,b) as.vector(a) - as.vector(b),
+                       thetascore.num, thetascore.den, SIMPLIFY = FALSE)
+  fit$VarCovMat = VarCovMat
+  fit$b.knots = b.knots
+  fit$i.knots = i.knots
+  fit$basis.intercept = basis.intercept
+  fit$dgr = dgr
+  fit$theta.index = seT.index
+  fit$gq.points = gq.points
+  fit$nodes = gq$nodes
+  fit$weights = gq$weights
+  fit$pos.def = pos.def
+  fit$n.basis = n.basis
+  fit$valid = valid
+  fit$lambda = oldlambda
+  fit$sand = sand
+  fit$se.sand = se.sand
+  fit$seB.sand = seB.sand
+  fit$seT.sand = seT.sand
+  fit
 }
 
 
