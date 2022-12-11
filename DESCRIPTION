@@ -14,5 +14,7 @@ Imports:
     splines2,
     statmod,
     stats,
-    survival,
+    survival (>= 3.4.0),
     utils
+Depends:
+    survival
