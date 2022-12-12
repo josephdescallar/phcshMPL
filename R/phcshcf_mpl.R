@@ -145,6 +145,51 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       tir[[q]] = NA
       xi[[q]] = NA
     }
+    ti.rml[[q]] = (tir[[q]] - til[[q]]) / 2
+    ti.rpl[[q]] = (tir[[q]] + til[[q]]) / 2
+    if(control$tmid==TRUE)
+      t.all.r[[q]] = c(te[[q]], tmid[[q]])
+    else
+      t.all.r[[q]] = c(te[[q]], til[[q]], tir[[q]])
+    n.per.risk[[q]] = n.e[[q]] + n.i[[q]]
+    n.iknots[[q]] = max(floor(n.per.risk[[q]]^(1/3)) - 2,1)
+    if(length(control$n.basis)!=0){
+      n.basis[[q]] = control$n.basis[[q]]
+      n.iknots[[q]] = n.basis[[q]] - 2
+    }
+    n.basis[[q]] = n.iknots[[q]] + dgr + basis.intercept
+    if(n.iknots[[q]]==1)
+      perc.iknots[[q]] = 0.5
+    else if(n.iknots[[q]]==2)
+      perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
+                         length.out = 4)[2:3]
+    else
+      perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
+                         length.out = n.iknots[[q]])
+    i.knots[[q]]  = stats::quantile(unique(t.all.r[[q]]), prob =
+                    perc.iknots[[q]], names = FALSE, na.rm = TRUE, type = 3)
+    if(!is.null(control$iknots.pos)){
+      i.knots[[q]] = control$iknots.pos[[q]]
+    }
+    ti.rml.gq[[q]] = sweep(matrix(ti.rml[[q]], nrow = n.i[[q]],
+                     ncol = gq.points), MARGIN = 2, gq$nodes, `*`) + ti.rpl[[q]]
+    ti.rml.gq.w[[q]] = sweep(matrix(ti.rml[[q]], nrow = n.i[[q]],
+                        ncol = gq.points), MARGIN = 2, gq$weights, `*`)
+    ti.rml.gq.l[[q]] = split(ti.rml.gq[[q]], rep(1:gq.points,
+                       each = n.i[[q]]))
+    ti.rml.gq.w.l[[q]] = split(ti.rml.gq.w[[q]], rep(1:gq.points,
+                         each = n.i[[q]]))
+    ti.rml.gq.w.psi[[q]] = lapply(ti.rml.gq.l[[q]], function(a) psif(a,
+                           b.knots, i.knots[[q]]))
+    Rtemp = matrix(0, nrow = n.basis[[q]], ncol = n.basis[[q]])
+    xknots = c(rep(t.min, dgr), i.knots[[q]], rep(t.max, dgr))
+    for(ii in 1:n.basis[[q]]){
+      for(jj in 1:n.basis[[q]]){
+        if(jj - ii<dgr){
+
+        }
+      }
+    }
   }
 }
 
