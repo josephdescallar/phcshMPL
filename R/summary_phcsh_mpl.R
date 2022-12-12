@@ -1,3 +1,13 @@
+#' Summarise a phxsh_mpl object
+#'
+#' Additional information about the Cox proportional hazard model fit
+#' represented by object is extracted and included in the returned object,
+#' which is suitable for printing with the generic print function. The generic
+#' coef function will extract the matrix of coefficients of interest with
+#' standard errors, zz-statistics and p-values.
+#' @param object An object inheriting from class coxph_mpl, representing a
+#' fitted Cox proportional hazard model.
+#' @param sand use sandwich estimates of standard error
 #' @export
 summary_phcsh_mpl <- function(object, sand = FALSE){
   if(sand == FALSE){

@@ -16,6 +16,7 @@
 #' coxph_mpl_control. In print.coxph_mpl, these elements will be passed to the
 #' print function.
 #' @return A character vector.
+#' @importFrom survival Surv
 #' @export
 #'
 phcsh_mpl <- function(formula, risk, data, control, ...){
