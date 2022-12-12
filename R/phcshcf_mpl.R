@@ -238,9 +238,116 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
   }
   max.outer = control$max.outer
   max.iter = control$max.iter
-  updbase <- function(theta, tr.PSI, te.psi, te.PSI.qr, ti.gq.PSI.qr,
-                      ti.rml.gq.w.psi){
-
+  # updbase <- function(theta, tr.PSI, te.psi, te.PSI.qr, ti.gq.PSI.qr,
+  #                     ti.rml.gq.w.psi){
+  #   te.h0.qr <- ti.gq.H0.qr <- ti.gq.S0r.qr <- ti.h0.q <- ti.h0.q.l <- list()
+  #   te.h0.q <- tr.H0r.r <- te.H0r.qr <- te.S0r.qr <- list()
+  #   for(q in 1:n.risk){
+  #     te.h0.r <- ti.gq.H0.r <- ti.gq.S0r.r <- te.H0r.r <- te.S0r.r <- list()
+  #     te.h0.q[[q]] <- te.psi[[q]] %*% theta[[q]]
+  #     for(r in 1:n.risk){
+  #       ti.gq.H0.r[[r]] <- sapply(ti.gq.PSI.qr[[q]][[r]], function(a) a %*%
+  #                          theta[[r]])
+  #       ti.gq.S0r.r[[r]] <- if(n.i[[q]]!=0) exp(-ti.gq.H0.r[[r]])
+  #       te.H0r.r[[r]] <- te.PSI.qr[[q]][[r]] %*% theta[[r]]
+  #       te.S0r.r[[r]] <- exp(-te.H0r.r[[r]])
+  #     }
+  #     tr.H0r.r[[q]] <- tr.PSI[[q]] %*% theta[[q]]
+  #     ti.gq.H0.qr[[q]] <-  ti.gq.H0.r
+  #     ti.gq.S0r.qr[[q]] <- ti.gq.S0r.r
+  #     ti.h0.q[[q]] <- sapply(ti.rml.gq.w.psi[[q]], function(a) a %*% theta[[q]])
+  #     ti.h0.q.l[[q]] <- split(ti.h0.q[[q]], rep(1:gq.points, each = n.i[[q]]))
+  #     te.H0r.qr[[q]] <- te.H0r.r
+  #     te.S0r.qr[[q]] <- te.S0r.r
+  #   }
+  #   out <- list("te.h0.q"=te.h0.q, "ti.gq.S0r.qr"=ti.gq.S0r.qr,
+  #               "ti.h0.q"=ti.h0.q, "ti.h0.q"=ti.h0.q, "tr.H0r.r"=tr.H0r.r,
+  #               "te.H0r.qr"=te.H0r.qr, "te.S0r.qr"=te.S0r.qr)
+  # }
+  # updllparms <- function(gamm, ze, zi, te.h0.q, beta, ti.h0.q, ti.gq.S0r.qr,
+  #                        xi, ti.rml.gq.w, tr.H0r.r, xr, zr, te.S0r.qr){
+  #   ze.exbzg.r <- ze.pi.r <- zi.ezg.qr <- zi.pi.r <- te.h.qr <- list()
+  #   xe.exb.qr <- te.h.q <- xi.exb.qr <- ti.Sr.gq.qr <- ti.h.q <- list()
+  #   ti.Sr.gq.qr.pop <- ti.S.gq.q <- ti.F.q <- ti.pi.qr <- xe.exb.q <- list()
+  #   xi.exb.q <- zi.ezg.q <- zi.pi.q <- tr.H.r <- xr.exb.r <- tr.Sr.r <- list()
+  #   tr.Sr.pop.r <- tr.Hr.r <- tr.Sr.pop.r <- zr.ezg.q <- zr.pi.q <- list()
+  #   te.Sr.qr <- te.Sr.pop.qr <- ti.S.gq.q.pop <- list()
+  #   for(q in 1:n.risk){
+  #     xe.exb.r <- te.h.r <- xi.exb.r <- ti.Sr.gq.r <- ti.Sr.gq.r.pop <- list()
+  #     ti.pi.r <- zi.ezg.r <- te.Sr.r <- te.Sr.pop.r <- list()
+  #     for(r in 1:n.risk){
+  #       ze.exbzg.r[[r]] <- exp(ze[[q]] %*% gamm[[r]])
+  #       ze.pi.r[[r]] <- ze.exbzg.r[[r]] / (1 + ze.exbzg.r[[r]])
+  #       zi.ezg.r[[r]] <- exp(zi[[q]] %*% gamm[[r]])
+  #       zi.pi.r[[r]] <- zi.ezg.r[[r]] / (1 + zi.ezg.r[[r]])
+  #       xe.exb.r[[r]] <- exp(data.matrix(xe[[q]]) %*% beta[[r]])
+  #       xi.exb.r[[r]] = exp(data.matrix(xi[[q]]) %*% beta[[r]])
+  #       ti.pi.r[[r]] <- zi.ezg.r[[r]] / (1 + zi.ezg.r[[r]])
+  #       ti.Sr.gq.r[[r]] = if(n.i[[q]]!=0)
+  #         ti.gq.S0r.qr[[q]][[r]] ^ as.vector(xi.exb.r[[r]])
+  #     }
+  #   }
+  # }
+  updbase <- function(theta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
+                      ti.gq.PSI.qr){
+    tr.H0.q = te.h0.q = ti.h0.q = ti.h0.q.l = te.H0.qr = ti.gq.H0.qr = list()
+    ti.gq.S0r.qr = list()
+    for(q in 1:n.risk){
+      tr.H0.q[[q]] = tr.PSI[[q]] %*% theta[[q]]
+      te.h0.q[[q]] = if(n.e[[q]]!=0) {te.psi[[q]] %*% theta[[q]]}
+      else{NA}
+      ti.h0.q[[q]] = sapply(ti.rml.gq.w.psi[[q]], function(a) a %*% theta[[q]])
+      ti.h0.q.l[[q]] = split(ti.h0.q[[q]], rep(1:gq.points, each = n.i[[q]]))
+      te.H0.r <- ti.gq.H0.r <- ti.gq.S0r.r <- list()
+      for(r in 1:n.risk){
+        te.H0.r[[r]] = if(n.e[[q]]!=0){te.PSI.qr[[q]][[r]] %*% theta[[r]]}
+        else{NA}
+        ti.gq.H0.r[[r]] = sapply(ti.gq.PSI.qr[[q]][[r]], function(a) a %*%
+                                   theta[[r]])
+        ti.gq.S0r.r[[r]] = if(n.i[[q]]!=0) exp(-ti.gq.H0.r[[r]])
+      }
+      te.H0.qr[[q]] = te.H0.r
+      ti.gq.H0.qr[[q]] = ti.gq.H0.r
+      ti.gq.S0r.qr[[q]] = ti.gq.S0r.r
+    }
+    out = list(tr.H0.q=tr.H0.q, te.h0.q=te.h0.q, ti.h0.q=ti.h0.q,
+               ti.h0.q.l=ti.h0.q.l, te.H0.qr = te.H0.qr, ti.gq.H0.qr =
+                 ti.gq.H0.qr, ti.gq.S0r.qr = ti.gq.S0r.qr)
+    out
+  }
+  updllparms <- function(beta, xr, xe, tr.H0.q, xi, te.h0.q, te.H0.qr,
+                         ti.h0.q, ti.gq.S0r.qr, ti.rml.gq.w){
+    xr.exb.q  = xe.exb.qr = tr.H.q = xi.exb.qr = te.h.q = te.H.qr = list()
+    ti.h.q = ti.Sr.gq.qr = ti.S.gq.q = ti.F.q = list()
+    for(q in 1:n.risk){
+      xr.exb.q[[q]] = exp(data.matrix(xr) %*% beta[[q]])
+      tr.H.q[[q]] = tr.H0.q[[q]] * as.vector(xr.exb.q[[q]])
+      xe.exb.r = xi.exb.r = te.H.r = ti.Sr.gq.r = list()
+      for(r in 1:n.risk){
+        xe.exb.r[[r]] = exp(data.matrix(xe[[q]]) %*% beta[[r]])
+        xi.exb.r[[r]] = exp(data.matrix(xi[[q]]) %*% beta[[r]])
+        te.H.r[[r]] = te.H0.qr[[q]][[r]] * as.vector(xe.exb.r[[r]])
+        ti.Sr.gq.r[[r]] = if(n.i[[q]]!=0)
+          ti.gq.S0r.qr[[q]][[r]] ^ as.vector(xi.exb.r[[r]])
+      }
+      xe.exb.qr[[q]] = xe.exb.r
+      xi.exb.qr[[q]] = xi.exb.r
+      te.h.q[[q]] = te.h0.q[[q]] * as.vector(xe.exb.qr[[q]][[q]])
+      te.H.qr[[q]] = te.H.r
+      ti.h.q[[q]] = if(n.i[[q]]!=0)
+        ti.h0.q[[q]] * as.vector(xi.exb.qr[[q]][[q]])
+      ti.Sr.gq.qr[[q]] = ti.Sr.gq.r
+      ti.S.gq.q[[q]] = Reduce("*", ti.Sr.gq.r)
+      ti.F.q[[q]] = if(n.i[[q]]!=0) {rowSums(ti.h.q[[q]] * ti.S.gq.q[[q]] *
+                                               ti.rml.gq.w[[q]])
+      }
+      else {NA}
+    }
+    out = list(xr.exb.q = xr.exb.q, xe.exb.qr = xe.exb.qr, tr.H.q = tr.H.q,
+               xi.exb.qr = xi.exb.qr, te.h.q = te.h.q, te.H.qr = te.H.qr,
+               ti.h.q = ti.h.q, ti.Sr.gq.qr = ti.Sr.gq.qr, ti.S.gq.q = ti.S.gq.q,
+               ti.F.q = ti.F.q)
+    out
   }
 }
 
