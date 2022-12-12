@@ -186,10 +186,61 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     for(ii in 1:n.basis[[q]]){
       for(jj in 1:n.basis[[q]]){
         if(jj - ii<dgr){
-
+          kntset = xknots[xknots >= xknots[jj] & xknots <= xknots[ii+dgr]]
+          kntsum = 0
+          for(kk in 1:(length(kntset) - 1)){
+            kntsum = kntsum + splines2::mSpline(kntset[kk],
+                     knots = i.knots[[q]], degree = dgr, intercept =
+                     basis.intercept, Boundary.knots = b.knots, derivs =
+                     2)[ii]*splines2::mSpline(kntset[kk], knots = i.knots[[q]],
+                     degree = dgr, intercept = basis.intercept,
+                     Boundary.knots = b.knots, derivs = 2)[jj]*(kntset[kk + 1] -
+                     kntset[kk])
+          }
+          Rtemp[ii, jj] = kntsum
         }
       }
     }
+    R.mat[[q]] <- Rtemp
+    R.mat[[q]][lower.tri(R.mat[[q]], diag = FALSE)] =
+      t(R.mat[[q]])[lower.tri(R.mat[[q]], diag = FALSE)]
+    oldgamm[[q]] <- rep(0, o)
+    newgamm[[q]] <- rep(0, o)
+    oldbeta[[q]] = rep(0, p)
+    newbeta[[q]] = rep(0, p)
+    oldtheta[[q]] = rep(1, n.basis[[q]])
+    newtheta[[q]] = rep(1, n.basis[[q]])
+    tr.PSI[[q]] = if(length(tr)!=0) PSIf(tr, b.knots, i.knots[[q]])
+    else NA
+    te.psi[[q]] = if(n.e[[q]]!=0) psif(te[[q]], b.knots, i.knots[[q]])
+    else NA
+    oldlambda[[q]] = control$lambda[q]
+  }
+  n.e.all = sum(unlist(n.e))
+  n.i.all = sum(unlist(n.i))
+  te.PSI.qr <- ti.gq.PSI.qr <- ti.gq.psi.qr <- te.psi.qr <- list()
+  for(q in 1:n.risk){
+    te.PSI.r <- ti.gq.PSI.r <- ti.gq.psi.r <- te.psi.r <- list()
+    for(r in 1:n.risk){
+      te.PSI.r[[r]] = if(n.e[[q]]!=0) PSIf(te[[q]], b.knots, i.knots[[r]])
+      else NA
+      ti.gq.PSI.r[[r]] = lapply(ti.rml.gq.l[[q]], function(a) PSIf(a,
+                         b.knots, i.knots[[r]]))
+      ti.gq.psi.r[[r]] = lapply(ti.rml.gq.l[[q]], function(a) psif(a,
+                         b.knots, i.knots[[r]]))
+      te.psi.r[[r]] = if(n.e[[q]]!=0) psif(te[[q]], b.knots, i.knots[[r]])
+      else NA
+    }
+    te.PSI.qr[[q]] = te.PSI.r
+    ti.gq.PSI.qr[[q]] = ti.gq.PSI.r
+    ti.gq.psi.qr[[q]] = ti.gq.psi.r
+    te.psi.qr[[q]] = te.psi.r
+  }
+  max.outer = control$max.outer
+  max.iter = control$max.iter
+  updbase <- function(theta, tr.PSI, te.psi, te.PSI.qr, ti.gq.PSI.qr,
+                      ti.rml.gq.w.psi){
+
   }
 }
 
