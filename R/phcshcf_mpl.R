@@ -452,7 +452,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     ti.h.q.l = ti.gq.H.qr =  list()
     for(q in 1:n.risk){
       ti.h.q.l[[q]] = if(n.i[[q]]!=0) {split(ti.h.q[[q]], rep((1:gq.points),
-                      each = n.i[[q]]))}
+      each = n.i[[q]]))}
       else NA
       ti.gq.H.r = list()
       for(r in 1:n.risk){ if(n.i[[q]]!=0){ti.gq.H.r[[r]] =
@@ -494,12 +494,366 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
           ti.AB.ju = list()
           for(w in 1:gq.points){
             if(q==r & q==t & r==t){
-
+              ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
+                (ti.S.gq.q[[q]][,w] * ti.gq.psi.qr[[q]][[t]][[w]] +
+                ti.h.q[[q]][,w]* ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
+                ti.gq.PSI.qr[[q]][[t]][[w]] - 2 * ti.h.q[[q]][,w] *
+                ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
+                ti.gq.psi.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+              }
+              else {NA}
+            }
+            else if(q==r & q!=t & r!=t){
+              ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
+                (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+              }
+              else {NA}
+            }
+            else if(q!=r & q==t & r!=t){
+              ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
+                (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
+                ti.gq.psi.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+              }
+              else {NA}
+            }
+            else if(q!=r & q!=t & r==t){
+              ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
+                (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+              }
+              else {NA}
+            }
+            else if(q!=r & q!=t & r!=t){
+              ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
+                (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+              }
+              else {NA}
             }
           }
+          ti.AB.jtu[[t]] = Reduce("+", ti.AB.ju)
+          ti.BB1.uz = ti.BB2.uz = list()
+          for(u in 1:n.basis[[r]]){
+            ti.BB1.z = ti.BB2.z = list()
+            for(z in 1:n.basis[[t]]){
+              ti.BB1 = ti.BB2 = list()
+              for(w in 1:gq.points){
+                if(n.i[[q]]!=0){
+                  if(q==r & q==t & r==t){
+                    ti.BB1[[w]] = -ti.S.gq.q[[q]][,w] *
+                      ti.gq.psi.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.PSI.qr[[q]][[t]][[w]][,z] *
+                      ti.rml.gq.w[[q]][,w]
+                    ti.BB2[[w]] = (ti.S.gq.q[[q]][,w] *
+                      ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.psi.qr[[q]][[t]][[w]][,z] - ti.h.q[[q]][,w]
+                      * ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                  }
+                  else if(q==r & q!=t & r!=t){
+                    ti.BB1[[w]] = -ti.S.gq.q[[q]][,w] *
+                      ti.gq.psi.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.PSI.qr[[q]][[t]][[w]][,z] *
+                      ti.rml.gq.w[[q]][,w]
+                    ti.BB2[[w]] = (- ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                      ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                  }
+                  else if(q!=r & q==t & r!=t){
+                    ti.BB1[[w]] = 0
+                    ti.BB2[[w]] = (ti.S.gq.q[[q]][,w] *
+                      ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.psi.qr[[q]][[t]][[w]][,z] - ti.h.q[[q]][,w]
+                      * ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                      ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                  }
+                  else if((q!=r & q!=t & r==t) | (q!=r & q!=t & r!=t)){
+                    ti.BB1[[w]] = 0
+                    ti.BB2[[w]] = (-ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                       ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                       ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                  }
+                }
+                else{
+                  ti.BB1[[w]] = NA
+                  ti.BB2[[w]] = NA
+                }
+              }
+              ti.BB1.z[[z]] = Reduce("+", ti.BB1)
+              ti.BB2.z[[z]] = Reduce("+", ti.BB2)
+            }
+            ti.BB1.uz[[u]] = ti.BB1.z
+            ti.BB2.uz[[u]] = ti.BB2.z
+          }
+          ti.BB1.utz[[t]] = ti.BB1.uz
+          ti.BB2.utz[[t]] = ti.BB2.uz
         }
+        ti.AA.rjtk[[r]] = ti.AA.jtk
+        ti.AB.rjtu[[r]] = ti.AB.jtu
+        ti.BB1.rutz[[r]] = ti.BB1.utz
+        ti.BB2.rutz[[r]] = ti.BB2.utz
+      }
+      ti.AA.qrjtk[[q]] = ti.AA.rjtk
+      ti.AB.qrjtu[[q]] = ti.AB.rjtu
+      ti.BB1.qrutz[[q]] = ti.BB1.rutz
+      ti.BB2.qrutz[[q]] = ti.BB2.rutz
+    }
+    te.h0.q = list()
+    for(q in 1:n.risk){
+      te.h0.q[[q]] = te.psi.qr[[q]][[q]] %*% theta[[q]]
+    }
+    hess.AA.rt.mat = hess.AB.rt.mat = hess.AB.x = list()
+    for(r in 1:n.risk){
+      hess.AA.t.mat = hess.AB.t.mat = list()
+      for(t in 1:n.risk){
+        hess.AA.t.mat[[t]] = Matrix::Diagonal(x = c(if(r==t){if(length(tr)!=0)
+          -tr.H.q[[t]]} else{rep(0, n.r)},
+          if(r==t){unlist(mapply(function(a,b) if(a!=0)
+            -b[[t]], n.e, te.H.qr, SIMPLIFY = FALSE))}
+          else{rep(0, sum(unlist(n.e)))},
+          unlist(mapply(function(a,b,c,d) if(d!=0)
+          {(a*b[[r]][[t]] - c[[r]]*c[[t]]) / (a^2)}, ti.F.q,
+          ti.AA.qrjtk, ti.A.qr, n.i, SIMPLIFY = FALSE))))
+      }
+      hess.AA.rt.mat[[r]] = Reduce("rbind", hess.AA.t.mat)
+    }
+    hess.AA.mat = Reduce("cbind", hess.AA.rt.mat)
+    hess.AA = t(hess.AA.x.diag) %*% hess.AA.mat %*% hess.AA.x.diag
+    AA.rjtk = list()
+    AA.mat = matrix(0, ncol = p*n.risk, nrow = p*n.risk)
+    AA.count1 = 1
+    AA.count2 = 1
+    for(r in 1:n.risk){
+      AA.jtk = list()
+      for(j in 1:p){
+        AA.tk = list()
+        for(t in 1:n.risk){
+          AA.k = list()
+          for(k in 1:p){
+            if(r==t){
+              xj.r <- xr[,j]
+              xk.r <- xr[,k]
+              AA.tr = as.vector(-tr.H.q[[t]])
+              xj.e = xj.i = xk.e = xk.i = AA.te = AA.ti = vector()
+              for(q in 1:n.risk){
+                if(n.e[[q]] != 0) {
+                  xj.e = c(xj.e, xe[[q]][, j])
+                  xk.e = c(xk.e, xe[[q]][, k])
+                  AA.te = c(AA.te, -te.H.qr[[q]][[t]])
+                }
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i, xi[[q]][, j])
+                  xk.i = c(xk.i, xi[[q]][, k])
+                  AA.ti = c(AA.ti, as.vector((ti.F.q[[q]] *
+                          ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
+                          ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
+                }
+              }
+              xj = c(xj.r, xj.e, xj.i)
+              xk = c(xk.r, xk.e, xk.i)
+              AA.elem = c(AA.tr, AA.te, AA.ti)
+              AA.temp = t(xj) %*% diag(AA.elem) %*% xk
+            }
+            else{
+              xj.i = xk.i = AA.ti = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i, xi[[q]][, j])
+                  xk.i = c(xk.i, xi[[q]][, k])
+                  AA.ti = c(AA.ti, as.vector((ti.F.q[[q]] *
+                          ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
+                          ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
+                }
+              }
+              xj = xj.i
+              xk = xk.i
+              AA.elem = AA.ti
+              AA.temp = t(xj) %*% diag(AA.elem) %*% xk
+            }
+            AA.mat[AA.count1, AA.count2] = AA.temp
+            AA.count2 = AA.count2 + 1
+          }
+        }
+        AA.count1 = AA.count1 + 1
+        AA.count2 = 1
       }
     }
+    hess.AB.rjtu = list()
+    for(r in 1:n.risk){
+      hess.AB.jtu = list()
+      for(j in 1:p){
+        hess.AB.tu = list()
+        for(t in 1:n.risk){
+          hess.AB.u = list()
+          for(u in 1:n.basis[[t]]){
+            hess.AB.u[[u]] = sum(c(if(r==t){if(length(tr)!=0)
+              -tr.PSI[[t]][,u]*xr[,j]*xr.exb.q[[t]]} else{rep(0,n.r)},
+              if(r==t){unlist(mapply(function(a,b,c,d) if(d!=0)
+                -a[[t]][,u]*b[,j]*c[[t]], te.PSI.qr, xe, xe.exb.qr, n.e,
+                SIMPLIFY = FALSE))},
+              unlist(mapply(function(a,b,c,d,e,f,g,h) if(h!=0) {f[,j]*g[[t]]*(
+              (a*b[[r]][[t]][,u]) - (c[[r]]*(d[[t]][,u] - e[[t]][,u]))) / a^2},
+                ti.F.q, ti.AB.qrjtu, ti.A.qr, ti.B1.qr, ti.B2.qr, xi, xi.exb.qr,
+                n.i, SIMPLIFY = FALSE))))
+          }
+          hess.AB.tu[[t]] = Reduce("rbind",hess.AB.u)
+        }
+        hess.AB.jtu[[j]] = Reduce("rbind",hess.AB.tu)
+      }
+      hess.AB.rjtu[[r]] = Reduce("cbind",hess.AB.jtu)
+    }
+    AB.mat = matrix(0, nrow = p*n.risk, ncol = sum(unlist(n.basis)))
+    AB.count1 = 1
+    AB.count2 = 1
+    for(r in 1:n.risk){
+      for(j in 1:p){
+        for(t in 1:n.risk){
+          for(z in 1:n.basis[[t]]){
+            if(r==t){
+              AB.exb.r <- xr.exb.q[[t]]
+              if(n.r != 0) AB.tr <- -tr.PSI[[t]][,z]
+              else AB.tr = vector()
+              xj.e <- xj.i <- AB.exb.e <- AB.exb.i <- AB.te <- AB.ti <- vector()
+              for(q in 1:n.risk){
+                if(n.e[[q]] != 0){
+                  xj.e = c(xj.e, xe[[q]][,j])
+                  AB.exb.e = c(AB.exb.e, xe.exb.qr[[q]][[t]])
+                  AB.te = c(AB.te, -te.PSI.qr[[q]][[t]][,z])
+                }
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i, xi[[q]][,j])
+                  AB.exb.i = c(AB.exb.i, xi.exb.qr[[q]][[t]])
+                  AB.ti = c(AB.ti, ((ti.F.q[[q]]*ti.AB.qrjtu[[q]][[r]][[t]][,z])
+                          - (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
+                          ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
+                }
+              }
+              xj = c(xj.r, xj.e, xj.i)
+              AB.elem = c(AB.tr, AB.te, AB.ti)
+              AB.exb = c(AB.exb.r, AB.exb.e, AB.exb.i)
+              AB.temp = t(xj) %*% diag(AB.elem) %*% AB.exb
+            }
+            else{
+              xj.i = AB.exb.i = AB.ti  = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  xj.i = c(xj.i,xi[[q]][,j])
+                  AB.exb.i = c(AB.exb.i, xi.exb.qr[[q]][[t]])
+                  AB.ti = c(AB.ti,((ti.F.q[[q]]*ti.AB.qrjtu[[q]][[r]][[t]][,z]) -
+                          (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
+                          ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
+                }
+              }
+              xj = xj.i
+              AB.elem = AB.ti
+              exb = AB.exb.i
+              AB.temp = t(xj) %*% diag(AB.elem) %*% exb
+            }
+            AB.mat[AB.count1, AB.count2] = AB.temp
+            AB.count2 = AB.count2 + 1
+          }
+        }
+        AB.count1 = AB.count1 + 1
+        AB.count2 = 1
+      }
+    }
+    hess.AB = Reduce("cbind", hess.AB.rjtu)
+    hess.BB.rtuz.mat = list()
+    for(r in 1:n.risk){
+      hess.BB.tuz.mat = list()
+      for(u in 1:n.basis[[r]]){
+        hess.BBtz.mat = list()
+        for(t in 1:n.risk){
+          hess.BBz.mat = list()
+          for(z in 1:n.basis[[t]]){
+            hess.BBz.mat[[z]] = sum(c(if(r==t & n.e[[r]]!=0)
+            {-te.psi.qr[[r]][[r]][,u]*te.psi.qr[[t]][[t]][,z]/te.h0.q[[r]]^2}
+            else{rep(0, n.e[[r]])}, unlist(mapply(function(a,b,c,d,e,f,g)
+              if(g!=0) {f[[r]] * f[[t]] * (((a * (b[[r]][[t]][[u]][[z]] -
+            c[[r]][[t]][[u]][[z]])) - (d[[r]][,u] - e[[r]][,u]) * (d[[t]][,z] -
+             e[[t]][,z]))) / a^2}, ti.F.q, ti.BB1.qrutz, ti.BB2.qrutz, ti.B1.qr,
+              ti.B2.qr, xi.exb.qr, n.i, SIMPLIFY = FALSE))))
+          }
+          hess.BBtz.mat[[t]] = Reduce("rbind", hess.BBz.mat)
+        }
+        hess.BB.tuz.mat[[u]] = Reduce("rbind", hess.BBtz.mat)
+      }
+      hess.BB.rtuz.mat[[r]] = Reduce("cbind", hess.BB.tuz.mat)
+    }
+    hess.BB.mat = Reduce("cbind", hess.BB.rtuz.mat)
+    BB.mat = matrix(0, nrow = sum(unlist(n.basis)), ncol = sum(unlist(n.basis)))
+    BB.count1 = 1
+    BB.count2 = 1
+    for(r in 1:n.risk){
+      for(u in 1:n.basis[[r]]){
+        for(t in 1:n.risk){
+          for(z in 1:n.basis[[t]]){
+            BB.exb.r.e = BB.exb.t.e = BB.te = vector()
+            if(r==t){
+              if(n.e[[r]] != 0){
+                BB.exb.r.e = rep(1, n.e[[r]])
+                BB.exb.t.e = rep(1, n.e[[r]])
+                BB.te = -(te.psi.qr[[r]][[r]][,u]*te.psi.qr[[r]][[r]][,z]) /
+                  te.h0.q[[r]]^2
+              }
+              BB.exb.r.i = BB.exb.t.i = BB.ti = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  BB.exb.r.i = c(BB.exb.r.i, xi.exb.qr[[q]][[r]])
+                  BB.exb.t.i = c(BB.exb.t.i, xi.exb.qr[[q]][[t]])
+                  BB.ti = c(BB.ti, (((ti.F.q[[q]] *
+                          (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
+                          ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
+                          (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
+                          (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
+                          ti.F.q[[q]]^2)
+                }
+              }
+            }
+            else{
+              BB.exb.r.i = BB.exb.t.i = BB.ti = vector()
+              for(q in 1:n.risk){
+                if(n.i[[q]] != 0){
+                  BB.exb.r.i = c(BB.exb.r.i, xi.exb.qr[[q]][[r]])
+                  BB.exb.t.i = c(BB.exb.t.i, xi.exb.qr[[q]][[t]])
+                  BB.ti = c(BB.ti, (((ti.F.q[[q]] *
+                          (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
+                          ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
+                          (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
+                          (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
+                              ti.F.q[[q]]^2)
+                }
+              }
+            }
+            BB.exb.r = c(BB.exb.r.e, BB.exb.r.i)
+            BB.exb.t = c(BB.exb.t.e, BB.exb.t.i)
+            BB.elem = c(BB.te, BB.ti)
+            BB.temp = t(BB.exb.r) %*% diag(BB.elem) %*% BB.exb.t
+            BB.mat[BB.count1, BB.count2] = BB.temp
+            BB.count2 = BB.count2 + 1
+          }
+        }
+        BB.count1 = BB.count1 + 1
+        BB.count2 = 1
+      }
+    }
+    lambdaR = as.matrix(Matrix::bdiag(mapply(function(a,b)  as.vector(a)*b,
+              oldlambda, R.mat, SIMPLIFY = FALSE)))
+    hess.BB = hess.BB.mat - 2*lambdaR
+    BB.mat.pen = BB.mat - 2*lambdaR
+    hess.old = cbind(rbind(hess.AA, hess.AB), rbind(t(hess.AB), hess.BB))
+    hess = cbind(rbind(AA.mat, t(AB.mat)), rbind(AB.mat, BB.mat.pen))
+    hess.no.pen = cbind(rbind(AA.mat, t(AB.mat)), rbind(AB.mat, BB.mat))
+    rlist = list("hess"=hess, "hess.no.pen"=hess.no.pen)
+    return(rlist)
   }
   gammascore.mat <- gammascore <- gammahess.mat <- gammahess <- list()
   gammainc <- newgamma <- num.mat <- betascore.mat <- betascore <- list()
@@ -595,7 +949,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         betahess.mat[[r]] = diag(c(if(length(tr)!=0) llparms$tr.H.q[[r]],
                             unlist(mapply(function(a,b) if(a!=0) b[[r]], n.e,
                             llparms$te.H.qr, SIMPLIFY = FALSE)),
-                            unlist(mapply(function(a,b,c) if(a!=0) (b[[r]] / c) ^ 2,
+                        unlist(mapply(function(a,b,c) if(a!=0) (b[[r]] / c) ^ 2,
                             n.i, betaparms$ti.A.qr, llparms$ti.F.q,
                             SIMPLIFY = FALSE))))
         betahess[[r]] = solve(t(betahess.X[[r]]) %*% betahess.mat[[r]] %*%
