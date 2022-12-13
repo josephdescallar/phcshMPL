@@ -444,10 +444,67 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                          if(n.i[[q]]!=0) zi[[q]])
     gammascore.1[[q]] <- rep(1, nrow(gammascore.Z[[q]]))
   }
+  hess.AA.x.diag = as.matrix(Matrix::bdiag(hess.AA.x))
+  updhessian <- function(ti.S.gq.q, ti.h.q, gq.points, n.i, ti.gq.H0.qr,
+                xi.exb.qr, ti.rml.gq.w, ti.gq.psi.qr, ti.gq.PSI.qr, tr.H.q,
+                te.H.qr, ti.F.q, ti.A.qr, tr.PSI, te.PSI.qr, ti.B1.qr,
+                ti.B2.qr, te.psi.qr, theta, xr.exb.q, xe.exb.qr, lambda, R.mat){
+    ti.h.q.l = ti.gq.H.qr =  list()
+    for(q in 1:n.risk){
+      ti.h.q.l[[q]] = if(n.i[[q]]!=0) {split(ti.h.q[[q]], rep((1:gq.points),
+                      each = n.i[[q]]))}
+      else NA
+      ti.gq.H.r = list()
+      for(r in 1:n.risk){ if(n.i[[q]]!=0){ti.gq.H.r[[r]] =
+        ti.gq.H0.qr[[q]][[r]] * as.vector(xi.exb.qr[[q]][[r]])}
+        else NA
+      }
+      ti.gq.H.qr[[q]] = ti.gq.H.r
+    }
+    ti.AA.qrjtk = ti.AB.qrjtu = ti.BB1.qrutz = ti.BB2.qrutz = list()
+    for(q in 1:n.risk){
+      ti.AA.rjtk = ti.AB.rjtu = ti.BB1.rutz = ti.BB2.rutz = list()
+      for(r in 1:n.risk){
+        ti.AA.jtk = ti.AB.jtu = ti.BB1.utz = ti.BB2.utz = list()
+        for(t in 1:n.risk){
+          if(q==r & r==t & q == t){
+            ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
+            ti.S.gq.q[[q]] * (1 - 3*ti.gq.H.qr[[q]][[r]] +
+            ti.gq.H.qr[[q]][[r]]^2)) * ti.rml.gq.w[[q]])}
+            else {NA}
+          }
+          else if(q==r & r!=t & q!=t){
+            ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
+            ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[t]] *(ti.gq.H.qr[[q]][[r]] - 1))
+            * ti.rml.gq.w[[q]])}
+            else {NA}
+          }
+          else if((q!=r & q==t & r!=t) | (q!=r & q!=t & r==t)){
+            ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
+            ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[r]] *(ti.gq.H.qr[[q]][[t]] - 1))
+            * ti.rml.gq.w[[q]])}
+            else {NA}
+          }
+          else if(q!=r & q!=t & r!=t){
+            ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
+            ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[r]] * ti.gq.H.qr[[q]][[t]])
+            * ti.rml.gq.w[[q]])}
+            else {NA}
+          }
+          ti.AB.ju = list()
+          for(w in 1:gq.points){
+            if(q==r & q==t & r==t){
+
+            }
+          }
+        }
+      }
+    }
+  }
   gammascore.mat <- gammascore <- gammahess.mat <- gammahess <- list()
   gammainc <- newgamma <- num.mat <- betascore.mat <- betascore <- list()
-  betahess.mat <- betahess <- betainc <- dJ <- num.exb <- list()
-  thetascore.num <- list()
+  betahess.mat <- betahess <- betainc <- dJ <- num.exb <- den.mat <- list()
+  thetascore.num <- den.exb <- thetascore.den <- thetascore.half <- list()
   for(outer in 1:max.outer){
     for(iter in 1:max.iter){
       if(control$iter.disp==TRUE)
@@ -645,10 +702,39 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   log(unlist(llparms$ti.F.q)+1e-12), -sum(unlist(R.pen)),
                   -unlist(llparms$pi.ze), -unlist(llparms$pi.zi), na.rm = TRUE)
           if (ome >= 1e-2) ome = ome * 0.6
+          else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
+          else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
+          else break
         }
+        llik2 = llik3
+        oldtheta = newtheta
       }
-    }
-  }
+      if(((max(mapply(function(a,b) abs(a - b), oldbeta, prev.oldbeta)) <
+           control$inner.conv) & (max(mapply(function(a,b) max(abs(a - b)),
+           oldtheta, prev.oldtheta)) < control$inner.conv) &
+          (max(mapply(function(a,b) max(abs(a - b)), oldgamm, prev.oldgamm))))){
+        break
+      }
+    } #inner
+    if(control$iter.disp == TRUE) cat("\n")
+    base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
+                   te.PSI.qr, ti.gq.PSI.qr)
+    llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+              base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+              oldgamm, ze, zi)
+    gammaparms <- updscoregamm(oldgamm, ze, zi)
+    betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
+                base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
+    thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
+                 ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
+    hessupd = updhessian(llparms$ti.S.gq.q, llparms$ti.h.q, gq.points,
+              n.i, base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w,
+              ti.gq.psi.qr, ti.gq.PSI.qr, llparms$tr.H.q, llparms$te.H.qr,
+              llparms$ti.F.q, betaparms$ti.A.qr, tr.PSI, te.PSI.qr,
+              thetaparms$ti.B1.qr, thetaparms$ti.B2.qr, te.psi.qr, oldtheta,
+              llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat)
+  } #outer
+  llik3
 }
 
 
