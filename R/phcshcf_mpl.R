@@ -358,9 +358,9 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     for(r in 1:n.risk){
       ze.ezg[[r]] <- exp(data.matrix(ze[[r]]) %*% gamm[[r]])
       zi.ezg[[r]] <- exp(data.matrix(zi[[r]]) %*% gamm[[r]])
-      ze.C.r[[r]] <- exp(data.matrix(ze[[r]]) %*% gamm[[r]]) /
+      ze.C.r[[r]] <- 1 /
       (1 + exp(data.matrix(ze[[r]]) %*% gamm[[r]]))^2
-      zi.C.r[[r]] <- exp(data.matrix(zi[[r]]) %*% gamm[[r]]) /
+      zi.C.r[[r]] <- 1 /
         (1 + exp(data.matrix(zi[[r]]) %*% gamm[[r]]))^2
     }
     out = list(ze.C.r=ze.C.r, zi.C.r=zi.C.r, ze.ezg=ze.ezg, zi.ezg=zi.ezg)
@@ -448,7 +448,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
   updhessian <- function(ti.S.gq.q, ti.h.q, gq.points, n.i, ti.gq.H0.qr,
                 xi.exb.qr, ti.rml.gq.w, ti.gq.psi.qr, ti.gq.PSI.qr, tr.H.q,
                 te.H.qr, ti.F.q, ti.A.qr, tr.PSI, te.PSI.qr, ti.B1.qr,
-                ti.B2.qr, te.psi.qr, theta, xr.exb.q, xe.exb.qr, lambda, R.mat){
+                ti.B2.qr, te.psi.qr, theta, xr.exb.q, xe.exb.qr, lambda,
+                R.mat, ze.ezg, zi.ezg, gamm, gammascore.Z){
     ti.h.q.l = ti.gq.H.qr =  list()
     for(q in 1:n.risk){
       ti.h.q.l[[q]] = if(n.i[[q]]!=0) {split(ti.h.q[[q]], rep((1:gq.points),
@@ -845,6 +846,15 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         BB.count2 = 1
       }
     }
+
+    for(r in 1:n.risk){
+      gammahess.mat[[r]] <- diag(c(if(n.e[[r]]!=0) ze.ezg[[r]]^2 /
+                            (1 + ze.ezg[[r]]^3),
+                            if(n.i[[r]]!=0) zi.ezg[[r]]^2 /
+                            (1 + zi.ezg[[r]]^3)))
+      gammahess[[r]] <- t(gammascore.Z[[r]]) %*% gammahess.mat[[r]] %*%
+                        gammascore.Z[[r]]
+    }
     lambdaR = as.matrix(Matrix::bdiag(mapply(function(a,b)  as.vector(a)*b,
               oldlambda, R.mat, SIMPLIFY = FALSE)))
     hess.BB = hess.BB.mat - 2*lambdaR
@@ -852,7 +862,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     hess.old = cbind(rbind(hess.AA, hess.AB), rbind(t(hess.AB), hess.BB))
     hess = cbind(rbind(AA.mat, t(AB.mat)), rbind(AB.mat, BB.mat.pen))
     hess.no.pen = cbind(rbind(AA.mat, t(AB.mat)), rbind(AB.mat, BB.mat))
-    rlist = list("hess"=hess, "hess.no.pen"=hess.no.pen)
+    rlist = list("hess"=hess, "hess.no.pen"=hess.no.pen, "gammahess"=gammahess)
     return(rlist)
   }
   gammascore.mat <- gammascore <- gammahess.mat <- gammahess <- list()
@@ -891,10 +901,10 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         if(n.i[[r]]!=0) gammaparms$zi.C.r[[r]]))
         gammascore[[r]] <- t(gammascore.Z[[r]]) %*% gammascore.mat[[r]] %*%
           gammascore.1[[r]]
-        gammahess.mat[[r]] <- diag(c(if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]^2 /
-        (1 + gammaparms$ze.ezg[[r]]^3),
-        if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]]^2 /
-        (1 + gammaparms$zi.ezg[[r]]^3)))
+        gammahess.mat[[r]] <- diag(c(if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]/
+                              (1 + gammaparms$ze.ezg[[r]])^2,
+        if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]] /
+        (1 + gammaparms$zi.ezg[[r]])^2))
         gammahess[[r]] <- solve(t(gammascore.Z[[r]]) %*% gammahess.mat[[r]] %*%
         gammascore.Z[[r]])
         gammainc[[r]] <- gammahess[[r]] %*% gammascore[[r]]
@@ -1086,9 +1096,11 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
               ti.gq.psi.qr, ti.gq.PSI.qr, llparms$tr.H.q, llparms$te.H.qr,
               llparms$ti.F.q, betaparms$ti.A.qr, tr.PSI, te.PSI.qr,
               thetaparms$ti.B1.qr, thetaparms$ti.B2.qr, te.psi.qr, oldtheta,
-              llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat)
+              llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat,
+              gammaparms$ze.ezg, gammaparms$zi.ezg, gamm, gammascore.Z)
   } #outer
-  llik3
+  rlist <- list("gamma"=oldgamm, "gammascore"=gammascore, "beta"=oldbeta,
+                "betascore"=betascore, "theta"=oldtheta)
 }
 
 
