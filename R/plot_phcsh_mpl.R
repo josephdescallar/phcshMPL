@@ -91,10 +91,11 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
     plot.F0r.dhdT.gq[[gq]] <- plot.F0r.psi.gq[[gq]]
     plot.F0r.dSdT.gq[[gq]] <- -plot.F0r.PSI.gq[[gq]] *
                               as.vector(plot.F0r.S0qt.gq[[gq]])
-    plot.F0r.dFdT.gqT[[gq]] <- as.matrix(plot.F0r.dhdT.gq[[gq]] *
+    plot.F0r.dFdT.gqT[[gq]] <- (as.matrix(plot.F0r.dhdT.gq[[gq]] *
                                as.vector(plot.F0r.S0qt.gq[[gq]]) +
                                as.vector(plot.F0r.h0qt.gq[[gq]]) *
-                               as.matrix(plot.F0r.dSdT.gq[[gq]]))
+                               as.matrix(plot.F0r.dSdT.gq[[gq]]))) *
+                               object$weights[gq]
   }
   plot.F0r <- bma*Reduce("+",plot.F0r.Integrand.gq)
   plot.F0r.dFdT <- bma*Reduce("+",plot.F0r.dFdT.gqT)
@@ -105,17 +106,44 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
   plot.F0r.log <- log(plot.F0r + 1e-12)
   plot.F0r.log.var <- (1/plot.F0r^2)*plot.F0r.r.var
   if(object$pos.def==1){
-    # plot.F0r.logOR.lower = plot.F0r.logOR - 1.96*sqrt(plot.F0r.logOR.var)
-    # plot.F0r.logOR.upper = plot.F0r.logOR + 1.96*sqrt(plot.F0r.logOR.var)
-    # plot.F0r.lower <- exp(plot.F0r.logOR.lower) / (1 + exp(plot.F0r.logOR.lower))
-    # plot.F0r.upper <- exp(plot.F0r.logOR.upper) / (1 + exp(plot.F0r.logOR.upper))
-    plot.F0r.lower <- plot.F0r - 1.96*sqrt(plot.F0r.r.var)
-    plot.F0r.upper <- plot.F0r + 1.96*sqrt(plot.F0r.r.var)
+    plot.F0r.logOR.lower = plot.F0r.logOR - 1.96*sqrt(plot.F0r.logOR.var)
+    plot.F0r.logOR.upper = plot.F0r.logOR + 1.96*sqrt(plot.F0r.logOR.var)
+    plot.F0r.lower <- exp(plot.F0r.logOR.lower) / (1 + exp(plot.F0r.logOR.lower))
+    plot.F0r.upper <- exp(plot.F0r.logOR.upper) / (1 + exp(plot.F0r.logOR.upper))
+    #plot.F0r.lower <- plot.F0r - 1.96*sqrt(plot.F0r.r.var)
+    #plot.F0r.upper <- plot.F0r + 1.96*sqrt(plot.F0r.r.var)
     #plot.F0r.log.lower <-  plot.F0r.log - 1.96*sqrt(plot.F0r.log.var)
     #plot.F0r.log.upper <-  plot.F0r.log + 1.96*sqrt(plot.F0r.log.var)
     #plot.F0r.lower <- exp(plot.F0r.log.lower)
     #plot.F0r.upper <- exp(plot.F0r.log.upper)
   }
+
+  #Cumulative incidence function
+  bma = (t.points - object$b.knots[1]) / 2
+  bpa = (t.points + object$b.knots[1]) / 2
+  t.bma.gq = sweep(matrix(bma, nrow = length(t.points),
+  ncol = object$gq.points), MARGIN = 2, object$nodes, `*`) + bpa
+  t.bma.gq.l = split(t.bma.gq, rep(1:object$gq.points, each = length(t.points)))
+  t.bma.gq.w.psi = lapply(t.bma.gq.l, function(a) psif(a,
+                   object$b.knots, object$i.knots[[risk]]))
+  t.bma.gq.w = sweep(matrix(bma, nrow = length(t.points),
+              ncol = object$gq.points), MARGIN = 2, object$weights, `*`)
+  t.h0.q <- sapply(t.bma.gq.w.psi, function(a) a %*% object$theta[[risk]])
+  t.gq.PSI.r <- t.gq.H0.r <- t.gq.S0r.r <- list()
+  for(r in 1:object$n.risk){
+    t.gq.PSI.r[[r]] = lapply(t.bma.gq.l, function(a) PSIf(a,
+                       object$b.knots, object$i.knots[[r]]))
+    t.gq.H0.r[[r]] = sapply(t.gq.PSI.r[[r]], function(a) a %*%
+                               object$theta[[r]])
+    t.gq.S0r.r[[r]] = exp(-t.gq.H0.r[[r]])
+  }
+  t.S.gq.q = Reduce("*", t.gq.S0r.r)
+  t.F.q = rowSums(t.h0.q * t.S.gq.q *
+                          t.bma.gq.w)
+  t.S.q = rowSums(t.S.gq.q * t.bma.gq.w)
+  t.h0.q.sum = rowSums(t.h0.q * t.bma.gq.w)
+  t.H0.q <- PSIf(t.points, object$b.knots, object$i.knots[[risk]]) %*% object$theta[[risk]]
+
   plot.bh = function(h0,low=NULL,up=NULL){
     if(object$pos.def==1){
       plot(t.points, h0, xlab = "t", main = paste("Risk", risk),
@@ -143,7 +171,7 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
   plot.cif = function(F0r, low=NULL, up=NULL){
     title = if(surv==0 & bh == 0) paste("Risk", risk)
     else ""
-    plot(t.points, F0r, xlab = "t", ylab = "CIF", ylim = c(-0.5,1),
+    plot(t.points, F0r, xlab = "t", ylab = "CIF", ylim = c(0,1),
     main = title, type = "l")
     if(object$pos.def==1){
       graphics::lines(t.points, low, lty = "dashed")
@@ -164,9 +192,11 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
     else plot.cif(plot.F0r)
   }
   rlist <- list("plot.F0r.r.var"=plot.F0r.r.var,
-           "plot.F0r.lower"=plot.F0r.lower, "plot.S0r.var"=plot.S0r.var,
-           "plot.S0r.logOR.var"=plot.S0r.logOR.var,
-           "plot.F0r.logOR.var"=plot.F0r.logOR.var)
+  "plot.F0r.lower"=plot.F0r.lower, "plot.S0r.var"=plot.S0r.var,
+  "plot.S0r.logOR.var"=plot.S0r.logOR.var,
+  "plot.F0r.logOR.var"=plot.F0r.logOR.var, "t.points"=t.points, "F0r"=plot.F0r,
+  "t.F.q"=t.F.q, "t.S.q"=t.S.q, "t.h0.q.sum"=t.h0.q.sum, "t.H0.q"=t.H0.q,
+  "t.h0.q"=t.h0.q)
   return(rlist)
 }
 

@@ -802,6 +802,16 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
                   base$ti.gq.S0r.qr, ti.rml.gq.w)
         betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
                     base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
+        print("llparms$tr.H.q")
+        print(llparms$tr.H.q)
+        print("llparms$te.H.qr")
+        print(llparms$te.H.qr)
+        print("llparms$xe.exb.qr")
+        print(llparms$xe.exb.qr)
+        print("betaparms$ti.A.qr")
+        print(betaparms$ti.A.qr)
+        print("llparms$ti.F.q")
+        print(llparms$ti.F.q)
         betascore.mat[[r]] = diag(c(if(length(tr)!=0) -llparms$tr.H.q[[r]],
                              rep(1, n.e[[r]]), unlist(mapply(function(a,b)
                              if(a!=0) -b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
@@ -819,6 +829,8 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
         betahess[[r]] = solve(t(betahess.X[[r]]) %*% betahess.mat[[r]] %*%
                                 betahess.X[[r]])
         betainc[[r]] = betahess[[r]] %*% betascore[[r]]
+        #print(betahess)
+        #print(betascore)
         newbeta[[r]] = oldbeta[[r]] + as.vector(betainc[[r]])
         llik1 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
                     -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
@@ -920,6 +932,8 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
         llik1 = llik2
         oldtheta = newtheta
       }
+      #print(oldbeta)
+      #print(oldtheta)
       if(((max(mapply(function(a,b) abs(a - b), oldbeta, prev.oldbeta)) <
            control$inner.conv) & (max(mapply(function(a,b) max(abs(a - b)),
                                              oldtheta, prev.oldtheta)) < control$inner.conv))) {
@@ -1068,6 +1082,7 @@ phcsh_mpl <- function(formula, risk, data, control, ...){
   fit$se.sand = se.sand
   fit$seB.sand = seB.sand
   fit$seT.sand = seT.sand
+  fit$
   fit
 }
 

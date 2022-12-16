@@ -359,9 +359,9 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       ze.ezg[[r]] <- exp(data.matrix(ze[[r]]) %*% gamm[[r]])
       zi.ezg[[r]] <- exp(data.matrix(zi[[r]]) %*% gamm[[r]])
       ze.C.r[[r]] <- 1 /
-      (1 + exp(data.matrix(ze[[r]]) %*% gamm[[r]]))^2
+      (1 + ze.ezg[[r]])
       zi.C.r[[r]] <- 1 /
-        (1 + exp(data.matrix(zi[[r]]) %*% gamm[[r]]))^2
+        (1 + zi.ezg[[r]])
     }
     out = list(ze.C.r=ze.C.r, zi.C.r=zi.C.r, ze.ezg=ze.ezg, zi.ezg=zi.ezg)
     out
@@ -908,6 +908,10 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         gammahess[[r]] <- solve(t(gammascore.Z[[r]]) %*% gammahess.mat[[r]] %*%
         gammascore.Z[[r]])
         gammainc[[r]] <- gammahess[[r]] %*% gammascore[[r]]
+        #gammainc[[r]] <- t(1 / gammascore.Z[[r]]) %*% diag(c(if(n.e[[r]]!=0) (gammaparms$ze.ezg[[r]]+1)/
+        #                          (gammaparms$ze.ezg[[r]]),
+        #                        if(n.i[[r]]!=0) (gammaparms$zi.ezg[[r]]+1) /
+        #                          (gammaparms$zi.ezg[[r]])^2)) %*% gammascore.1[[r]]
         newgamm[[r]] = oldgamm[[r]] + as.vector(gammainc[[r]])
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
         base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
