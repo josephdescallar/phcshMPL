@@ -316,9 +316,10 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     out
   }
   updllparms <- function(beta, xr, xe, tr.H0.q, xi, te.h0.q, te.H0.qr,
-                         ti.h0.q, ti.gq.S0r.qr, ti.rml.gq.w, gamm, ze, zi){
+                         ti.h0.q, ti.gq.S0r.qr, ti.rml.gq.w, gamm, ze, zi, zr){
     xr.exb.q  = xe.exb.qr = tr.H.q = xi.exb.qr = te.h.q = te.H.qr = list()
     ti.h.q = ti.Sr.gq.qr = ti.S.gq.q = ti.F.q = pi.ze = pi.zi = list()
+    zr.ezg <- pi.zr <- tr.H.r <- tr.Sr.r <- tr.Sr.pop.r <- te.S.r <- list()
     for(q in 1:n.risk){
       xr.exb.q[[q]] = exp(data.matrix(xr) %*% beta[[q]])
       tr.H.q[[q]] = tr.H0.q[[q]] * as.vector(xr.exb.q[[q]])
@@ -327,6 +328,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         xe.exb.r[[r]] = exp(data.matrix(xe[[q]]) %*% beta[[r]])
         xi.exb.r[[r]] = exp(data.matrix(xi[[q]]) %*% beta[[r]])
         te.H.r[[r]] = te.H0.qr[[q]][[r]] * as.vector(xe.exb.r[[r]])
+        te.S.r[[r]] = exp(-te.H.r[[r]])
         ti.Sr.gq.r[[r]] = if(n.i[[q]]!=0)
           ti.gq.S0r.qr[[q]][[r]] ^ as.vector(xi.exb.r[[r]])
       }
@@ -346,24 +348,42 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                      exp(data.matrix(ze[[q]]) %*% gamm[[q]]))
       pi.zi[[q]] <- exp(data.matrix(zi[[q]]) %*% gamm[[q]]) / (1 +
                      exp(data.matrix(zi[[q]]) %*% gamm[[q]]))
+      zr.ezg[[q]] <- exp(data.matrix(zr) %*% gamm[[r]])
+      pi.zr[[q]] <- zr.ezg[[q]] / (1 + zr.ezg[[q]])
+      tr.Sr.r[[q]] <- exp(-tr.H.q[[q]])
+      tr.Sr.pop.r[[q]] <- pi.zr[[q]]*tr.Sr.r[[q]] + (1 - pi.zr[[q]])
     }
     out = list(xr.exb.q = xr.exb.q, xe.exb.qr = xe.exb.qr, tr.H.q = tr.H.q,
                xi.exb.qr = xi.exb.qr, te.h.q = te.h.q, te.H.qr = te.H.qr,
                ti.h.q = ti.h.q, ti.Sr.gq.qr = ti.Sr.gq.qr, ti.S.gq.q = ti.S.gq.q,
-               ti.F.q = ti.F.q, pi.ze=pi.ze, pi.zi=pi.zi)
+               ti.F.q = ti.F.q, pi.ze=pi.ze, pi.zi=pi.zi, pi.zr=pi.zr,
+               tr.Sr.pop.r=tr.Sr.pop.r, te.S.r=te.S.r, tr.Sr.r=tr.Sr.r,
+               zr.ezg=zr.ezg)
     out
   }
-  updscoregamm <- function(gamm, ze, zi){
-    ze.C.r <- zi.C.r <- ze.ezg <- zi.ezg <- list()
+  updscoregamm <- function(gamm, ze, zi, zr, tr.H.q, q){
+    ze.C.r <- zi.C.r <- ze.ezg <- zi.ezg <- zr.ezg <- tr.D <- list()
+    tr.Sr.q <- zr.D.q <- zr.D2.q <- tr.Sr.pop.q <- zr.pi.q <- list()
     for(r in 1:n.risk){
+      zr.ezg[[r]] <- exp(data.matrix(zr) %*% gamm[[r]])
       ze.ezg[[r]] <- exp(data.matrix(ze[[r]]) %*% gamm[[r]])
       zi.ezg[[r]] <- exp(data.matrix(zi[[r]]) %*% gamm[[r]])
       ze.C.r[[r]] <- 1 /
       (1 + ze.ezg[[r]])
       zi.C.r[[r]] <- 1 /
         (1 + zi.ezg[[r]])
+      tr.Sr.q[[r]] <- exp(-tr.H.q[[r]])
+      zr.D.q[[r]] <- (zr.ezg[[r]]*(tr.Sr.q[[r]]-1)) / ((1+zr.ezg[[r]]) *
+                     (tr.Sr.q[[r]] * zr.ezg[[r]] + 1))
+      zr.D2.q[[r]] <- ((tr.Sr.q[[r]]-1)*zr.ezg[[r]]*(tr.Sr.q[[r]]*2*zr.ezg[[r]]-1)) /
+        ((zr.ezg[[r]]^2)*(tr.Sr.q[[r]]*zr.ezg[[r]]+1)^2)
+      zr.pi.q[[r]] <- zr.ezg[[r]] / (1 + zr.ezg[[r]])
+      tr.Sr.pop.q[[r]] <- zr.pi.q[[r]] * tr.Sr.q[[r]] + (1 - zr.pi.q[[r]])
+
     }
-    out = list(ze.C.r=ze.C.r, zi.C.r=zi.C.r, ze.ezg=ze.ezg, zi.ezg=zi.ezg)
+    out = list(ze.C.r=ze.C.r, zi.C.r=zi.C.r, ze.ezg=ze.ezg, zi.ezg=zi.ezg,
+               zr.ezg=zr.ezg, tr.Sr.q=tr.Sr.q, zr.D.q=zr.D.q, zr.D2.q=zr.D2.q,
+               tr.Sr.pop.q=tr.Sr.pop.q)
     out
   }
   updscorebeta <- function(ti.h.q, ti.S.gq.q, ti.gq.H0.qr, xi.exb.qr,
@@ -440,8 +460,9 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     theta.num.1[[q]] = matrix(1, ncol = 1, nrow = n.e[[q]] + sum(unlist(n.i)))
     theta.den.1[[q]] = matrix(1, ncol = 1, nrow = n.r + sum(unlist(n.e)) +
                                 sum(unlist(n.i)))
-    gammascore.Z[[q]] <- Reduce("rbind", list(if(n.e[[q]]!=0) ze[[q]]),
-                         if(n.i[[q]]!=0) zi[[q]])
+    gammascore.Z[[q]] <- data.matrix(Reduce("rbind",
+                         list(if(length(tr)!=0) zr, if(n.e[[q]]!=0) ze[[q]]),
+                         if(n.i[[q]]!=0) zi[[q]]))
     gammascore.1[[q]] <- rep(1, nrow(gammascore.Z[[q]]))
   }
   hess.AA.x.diag = as.matrix(Matrix::bdiag(hess.AA.x))
@@ -449,7 +470,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                 xi.exb.qr, ti.rml.gq.w, ti.gq.psi.qr, ti.gq.PSI.qr, tr.H.q,
                 te.H.qr, ti.F.q, ti.A.qr, tr.PSI, te.PSI.qr, ti.B1.qr,
                 ti.B2.qr, te.psi.qr, theta, xr.exb.q, xe.exb.qr, lambda,
-                R.mat, ze.ezg, zi.ezg, gamm, gammascore.Z){
+                R.mat, ze.ezg, zi.ezg, gamm, gammascore.Z, zr.D2.q){
     ti.h.q.l = ti.gq.H.qr =  list()
     for(q in 1:n.risk){
       ti.h.q.l[[q]] = if(n.i[[q]]!=0) {split(ti.h.q[[q]], rep((1:gq.points),
@@ -848,7 +869,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     }
 
     for(r in 1:n.risk){
-      gammahess.mat[[r]] <- diag(c(if(n.e[[r]]!=0) ze.ezg[[r]]^2 /
+      gammahess.mat[[r]] <- diag(c(if(n.r!=0) zr.D2.q[[r]],
+                            if(n.e[[r]]!=0) ze.ezg[[r]]^2 /
                             (1 + ze.ezg[[r]]^3),
                             if(n.i[[r]]!=0) zi.ezg[[r]]^2 /
                             (1 + zi.ezg[[r]]^3)))
@@ -869,6 +891,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
   gammainc <- newgamma <- num.mat <- betascore.mat <- betascore <- list()
   betahess.mat <- betahess <- betainc <- dJ <- num.exb <- den.mat <- list()
   thetascore.num <- den.exb <- thetascore.den <- thetascore.half <- list()
+  thetascore <- list()
   for(outer in 1:max.outer){
     for(iter in 1:max.iter){
       if(control$iter.disp==TRUE)
@@ -883,28 +906,51 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                ti.gq.PSI.qr)
       llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                 base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                oldgamm, ze, zi)
+                oldgamm, ze, zi, zr)
       R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
                      oldlambda, SIMPLIFY = FALSE)
-      llik0 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
+      llik0 = sum(log(unlist(llparms$te.h.q)+1e-12),
                   -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                  -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                  -unlist(llparms$pi.zi), na.rm = TRUE)
+                  -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                  log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
       for(r in 1:n.risk){
         base <- updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
         ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
         base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-        oldgamm, ze, zi)
-        gammaparms <- updscoregamm(oldgamm, ze, zi)
-        gammascore.mat[[r]] <- diag(c(if(n.e[[r]]!=0) gammaparms$ze.C.r[[r]],
-        if(n.i[[r]]!=0) gammaparms$zi.C.r[[r]]))
+        oldgamm, ze, zi, zr)
+        gammaparms <- updscoregamm(oldgamm, ze, zi, zr, llparms$tr.H.q, r)
+        gammascore.mat[[r]] <- diag(c(if(n.r!=0) ((llparms$tr.Sr.r[[r]] - 1) *
+                               llparms$zr.ezg[[r]]) / ((llparms$tr.Sr.pop.r[[r]])
+                              * (1+llparms$zr.ezg[[r]])^2), if(n.e[[r]]!=0)
+                               gammaparms$ze.C.r[[r]], if(n.i[[r]]!=0)
+                               gammaparms$zi.C.r[[r]]))
+        # gammascore.mat[[r]] <- diag(c(if(n.r!=0) ((llparms$tr.Sr.r[[r]] - 1) *
+        #                        llparms$zr.ezg[[r]]) / ((llparms$tr.Sr.r[[r]] * llparms$zr.ezg[[r]] +
+        #                        1) * (1+llparms$zr.ezg[[r]])), if(n.e[[r]]!=0)
+        #                        gammaparms$ze.C.r[[r]], if(n.i[[r]]!=0)
+        #                        gammaparms$zi.C.r[[r]]))
         gammascore[[r]] <- t(gammascore.Z[[r]]) %*% gammascore.mat[[r]] %*%
-          gammascore.1[[r]]
-        gammahess.mat[[r]] <- diag(c(if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]/
+          data.matrix(gammascore.1[[r]])
+        gammahess.mat[[r]] <- diag(c(if(n.r!=0) (-(llparms$tr.Sr.r[[r]] - 1) *
+                              llparms$zr.ezg[[r]] * (llparms$tr.Sr.pop.r[[r]] *
+                              (llparms$zr.ezg[[r]]+1)^2  - (llparms$zr.ezg[[r]]
+                              + llparms$tr.Sr.pop.r[[r]] * 2 * (1 +
+                              llparms$zr.ezg[[r]])))) /
+                              ((llparms$tr.Sr.pop.r[[r]] * (1 +
+                              llparms$zr.ezg[[r]])^2))^2,
+                              if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]/
                               (1 + gammaparms$ze.ezg[[r]])^2,
         if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]] /
         (1 + gammaparms$zi.ezg[[r]])^2))
+        # gammahess.mat[[r]] <- diag(c(if(n.r!=0) (-(llparms$tr.Sr.r[[r]] - 1) * llparms$zr.ezg[[r]] *
+        #                       (llparms$tr.Sr.r[[r]] * llparms$zr.ezg[[r]]* llparms$zr.ezg[[r]] - 1))  /
+        #                       (((llparms$tr.Sr.r[[r]] * llparms$zr.ezg[[r]] + 1)^2) * (1 +
+        #                       llparms$zr.ezg[[r]])^2),
+        #                       if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]/
+        #                       (1 + gammaparms$ze.ezg[[r]])^2,
+        #                       if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]] /
+        #                       (1 + gammaparms$zi.ezg[[r]])^2))
         gammahess[[r]] <- solve(t(gammascore.Z[[r]]) %*% gammahess.mat[[r]] %*%
         gammascore.Z[[r]])
         gammainc[[r]] <- gammahess[[r]] %*% gammascore[[r]]
@@ -915,21 +961,21 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         newgamm[[r]] = oldgamm[[r]] + as.vector(gammainc[[r]])
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
         base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-        newgamm, ze, zi)
-        llik1 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                    -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                    -unlist(llparms$pi.zi), na.rm = TRUE)
+        newgamm, ze, zi, zr)
+        llik1 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                     -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                     -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                     log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
         ome = 0.6
         while(llik1 <= llik0){
           newgamm[[r]] = oldgamm[[r]] + (ome * as.vector(gammainc[[r]]))
           llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                     base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                    newgamm, ze, zi)
-          llik1 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                      -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                      -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                      -unlist(llparms$pi.zi), na.rm = TRUE)
+                    newgamm, ze, zi, zr)
+          llik1 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                       -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                       -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                       log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
           if(ome >= 1e-2) ome = ome * 0.6
           else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
           else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
@@ -940,53 +986,59 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       }
       R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
               oldlambda, SIMPLIFY = FALSE)
-      llik1 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                  -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                  -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                  -unlist(llparms$pi.zi), na.rm = TRUE)
+      llik1 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                   -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                   -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                   log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
       for(r in 1:n.risk){
         base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
                        te.PSI.qr, ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                   base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  newgamm, ze, zi)
+                  newgamm, ze, zi, zr)
         betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
                     base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
-        betascore.mat[[r]] = diag(c(if(length(tr)!=0) -llparms$tr.H.q[[r]],
-                             rep(1, n.e[[r]]), unlist(mapply(function(a,b)
+        betascore.mat[[r]] = diag(c(if(length(tr)!=0) -llparms$pi.zr[[r]] *
+                            llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] /
+                            llparms$tr.Sr.pop.r[[r]], rep(1, n.e[[r]]),
+                            unlist(mapply(function(a,b)
                              if(a!=0) -b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
                              FALSE)), unlist(mapply(function(a,b,c)
                              if(a!=0) b[[r]] / c, n.i, betaparms$ti.A.qr,
                              llparms$ti.F.q, SIMPLIFY = FALSE))))
         betascore[[r]] = t(betascore.X[[r]]) %*% betascore.mat[[r]] %*%
                         betascore.1[[r]]
-        betahess.mat[[r]] = diag(c(if(length(tr)!=0) llparms$tr.H.q[[r]],
-                            unlist(mapply(function(a,b) if(a!=0) b[[r]], n.e,
-                            llparms$te.H.qr, SIMPLIFY = FALSE)),
-                        unlist(mapply(function(a,b,c) if(a!=0) (b[[r]] / c) ^ 2,
-                            n.i, betaparms$ti.A.qr, llparms$ti.F.q,
-                            SIMPLIFY = FALSE))))
+        betahess.mat[[r]] = diag(c(if(length(tr)!=0) (llparms$pi.zr[[r]] *
+                            llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] *
+                            (llparms$tr.Sr.pop.r[[r]] * (llparms$tr.H.q[[r]]
+                            - 1) - llparms$pi.zr[[r]] * llparms$tr.Sr.r[[r]] *
+                            llparms$tr.H.q[[r]])) / llparms$tr.Sr.pop.r[[r]]^2,
+                            unlist(mapply(function(a,b)
+                            if(a!=0) b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
+                            FALSE)),  unlist(mapply(function(a,b,c) if(a!=0)
+                            (b[[r]] / c) ^ 2, n.i, betaparms$ti.A.qr,
+                            llparms$ti.F.q, SIMPLIFY = FALSE))))
         betahess[[r]] = solve(t(betahess.X[[r]]) %*% betahess.mat[[r]] %*%
                         betahess.X[[r]])
         betainc[[r]] = betahess[[r]] %*% betascore[[r]]
         newbeta[[r]] = oldbeta[[r]] + as.vector(betainc[[r]])
         llparms = updllparms(newbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                   base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  oldgamm, ze, zi)
-        llik2 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                    -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                    -unlist(llparms$pi.zi), na.rm = TRUE)
+                  oldgamm, ze, zi, zr)
+        llik2 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                     -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                     -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                     log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
         ome = 0.6
         while(llik2 <= llik1){
           newbeta[[r]] = oldbeta[[r]] + (ome * as.vector(betainc[[r]]))
           llparms = updllparms(newbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                     base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                    newgamm, ze, zi)
-          llik2 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                      -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                      -unlist(llparms$pi.zi), na.rm = TRUE)
+                    newgamm, ze, zi, zr)
+          llik2 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                       -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                       -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                       log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
           if(ome >= 1e-2) ome = ome * 0.6
           else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
           else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
@@ -997,16 +1049,17 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       }
       R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
               oldlambda, SIMPLIFY = FALSE)
-      llik2 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                  -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                  -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                  -unlist(llparms$pi.zi), na.rm = TRUE)
+      llik2 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                   -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                   -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                   log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
+
       for(r in 1:n.risk){
         base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
                te.PSI.qr, ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                   base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  oldgamm, ze, zi)
+                  oldgamm, ze, zi, zr)
         thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
                      ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
         num.mat[[r]] = Reduce("rbind", list(if(n.e[[r]]!=0) te.psi[[r]] /
@@ -1023,8 +1076,11 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                               (num.mat[[r]]*as.vector(num.exb[[r]])))) -
                               as.vector(oldlambda[[r]]) * pmin(dJ[[r]], 0) +
                               1e-12
-        den.mat[[r]] = Reduce("rbind", list(if(length(tr)!=0) tr.PSI[[r]],
-                       Reduce("rbind", mapply(function(a,b) if(a!=0) b[[r]],
+        den.mat[[r]] = Reduce("rbind", list(if(length(tr)!=0) (tr.PSI[[r]] *
+                       as.vector(llparms$tr.Sr.r[[r]]) *
+                       as.vector(llparms$pi.zr[[r]])) /
+                       as.vector(llparms$tr.Sr.pop.r[[r]]), Reduce("rbind",
+                       mapply(function(a,b) if(a!=0) b[[r]],
                        n.e, te.PSI.qr, SIMPLIFY = FALSE)),
                        Reduce("rbind", mapply(function(a,b,c) if(a!=0)
                        {b[[r]] / c}, n.i, thetaparms$ti.B2.qr, llparms$ti.F.q,
@@ -1041,19 +1097,20 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                               1e-12
         thetascore.half[[r]] = oldtheta[[r]]*(thetascore.num[[r]] /
                                thetascore.den[[r]])
+        thetascore[[r]] = thetascore.num[[r]] - thetascore.den[[r]]
         newtheta[[r]] = as.vector(oldtheta[[r]] + (thetascore.half[[r]] -
                         oldtheta[[r]]))
         base = updbase(newtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
                te.PSI.qr, ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                   base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  oldgamm, ze, zi)
+                  oldgamm, ze, zi, zr)
         R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, newtheta, R.mat,
                 oldlambda, SIMPLIFY = FALSE)
-        llik3 = sum(-unlist(llparms$tr.H.q), log(unlist(llparms$te.h.q)+1e-12),
-                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
-                    -sum(unlist(R.pen)), -unlist(llparms$pi.ze),
-                    -unlist(llparms$pi.zi), na.rm = TRUE)
+        llik3 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                     -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                     -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                     log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
         ome = 0.6
         while(llik3 <= llik2){
           newtheta[[r]] = as.vector(oldtheta[[r]] + ome *
@@ -1062,13 +1119,13 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                  te.PSI.qr, ti.gq.PSI.qr)
           llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
                     base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                    oldgamm, ze, zi)
+                    oldgamm, ze, zi, zr)
           R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, newtheta, R.mat,
                   oldlambda, SIMPLIFY = FALSE)
-          llik3 = sum(-unlist(llparms$tr.H.q),
-                  log(unlist(llparms$te.h.q)+1e-12), -unlist(llparms$te.H.qr),
-                  log(unlist(llparms$ti.F.q)+1e-12), -sum(unlist(R.pen)),
-                  -unlist(llparms$pi.ze), -unlist(llparms$pi.zi), na.rm = TRUE)
+          llik3 =  sum(log(unlist(llparms$te.h.q)+1e-12),
+                       -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                       -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
+                       log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
           if (ome >= 1e-2) ome = ome * 0.6
           else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
           else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
@@ -1089,8 +1146,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                    te.PSI.qr, ti.gq.PSI.qr)
     llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
               base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-              oldgamm, ze, zi)
-    gammaparms <- updscoregamm(oldgamm, ze, zi)
+              oldgamm, ze, zi, zr)
+    gammaparms <- updscoregamm(oldgamm, ze, zi, zr, llparms$tr.H.q, r)
     betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
                 base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
     thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
@@ -1101,10 +1158,20 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
               llparms$ti.F.q, betaparms$ti.A.qr, tr.PSI, te.PSI.qr,
               thetaparms$ti.B1.qr, thetaparms$ti.B2.qr, te.psi.qr, oldtheta,
               llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat,
-              gammaparms$ze.ezg, gammaparms$zi.ezg, gamm, gammascore.Z)
+              gammaparms$ze.ezg, gammaparms$zi.ezg, gamm, gammascore.Z,
+              gammaparms$zr.D2.q)
   } #outer
+  gamma.table <- beta.table <- theta.table <- list()
+  for(r in 1:n.risk){
+    gamma.table[[r]] <- cbind("estimate"=oldgamm[[r]], "score"=as.vector(gammascore[[r]]))
+    beta.table[[r]] <- cbind("estimate"=oldbeta[[r]], "score"=as.vector(betascore[[r]]))
+    theta.table[[r]] <- cbind("estimate"=as.vector(oldtheta[[r]]), "score"=as.vector(thetascore[[r]]))
+  }
   rlist <- list("gamma"=oldgamm, "gammascore"=gammascore, "beta"=oldbeta,
-                "betascore"=betascore, "theta"=oldtheta)
+                "betascore"=betascore, "theta"=oldtheta,
+                "thetascore" = thetascore)
+  table.list <- list("gamma"=gamma.table, "beta"=beta.table, "theta"=theta.table)
+  return(table.list)
 }
 
 

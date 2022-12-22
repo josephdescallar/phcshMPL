@@ -196,7 +196,9 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
   "plot.S0r.logOR.var"=plot.S0r.logOR.var,
   "plot.F0r.logOR.var"=plot.F0r.logOR.var, "t.points"=t.points, "F0r"=plot.F0r,
   "t.F.q"=t.F.q, "t.S.q"=t.S.q, "t.h0.q.sum"=t.h0.q.sum, "t.H0.q"=t.H0.q,
-  "t.h0.q"=t.h0.q)
+  "t.h0.q"=t.h0.q, "plot.S0r"=plot.S0r, "plot.S0r.lower"=plot.S0r.lower,
+  "plot.S0r.upper"=plot.S0r.upper, "plot.h0r"=plot.h0r, "plot.h0r.lower"=plot.h0r.lower,
+  "plot.h0r.upper"=plot.h0r.upper)
   return(rlist)
 }
 
