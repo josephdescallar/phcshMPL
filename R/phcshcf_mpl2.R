@@ -94,7 +94,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
   data.export = data.frame(y,X,Z,risk)
   data.all = data.frame(y,XC,risk,ZC)
   data.all[,1][,2] = ifelse(data.all[,1][,3]==2,
-                     data.all[,1][,1],data.all[,1][,2])
+                            data.all[,1][,1],data.all[,1][,2])
   data.all[,1][,1] = ifelse(data.all[,1][,3]==2, 0, data.all[,1][,1])
   l.risk <- sort(unique(risk))
   n.risk <- length(l.risk)
@@ -131,14 +131,14 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       xe[[q]] = NA
     }
     til[[q]] = data.all[which(risk==q & (data.all[,1][,3]==3 |
-               data.all[,1][,3]==2)),1][,1]
+                                           data.all[,1][,3]==2)),1][,1]
     tir[[q]] = data.all[which(risk==q & (data.all[,1][,3]==3 |
-               data.all[,1][,3]==2)),1][,2]
+                                           data.all[,1][,3]==2)),1][,2]
     tmid[[q]] = rowMeans(cbind(til[[q]],tir[[q]]))
     xi[[q]] = as.matrix(data.all[which(risk==q & (data.all[,1][,3]==3 |
-              data.all[,1][,3]==2)), xnames])
+                                                    data.all[,1][,3]==2)), xnames])
     zi[[q]] = as.matrix(data.all[which(risk==q & (data.all[,1][,3]==3 |
-              data.all[,1][,3]==2)), znames])
+                                                    data.all[,1][,3]==2)), znames])
     n.i[[q]] = length(til[[q]])
     if(n.i[[q]] == 0){
       til[[q]] = NA
@@ -162,25 +162,25 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       perc.iknots[[q]] = 0.5
     else if(n.iknots[[q]]==2)
       perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
-                         length.out = 4)[2:3]
+                             length.out = 4)[2:3]
     else
       perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
-                         length.out = n.iknots[[q]])
+                             length.out = n.iknots[[q]])
     i.knots[[q]]  = stats::quantile(unique(t.all.r[[q]]), prob =
-                    perc.iknots[[q]], names = FALSE, na.rm = TRUE, type = 3)
+                                      perc.iknots[[q]], names = FALSE, na.rm = TRUE, type = 3)
     if(!is.null(control$iknots.pos)){
       i.knots[[q]] = control$iknots.pos[[q]]
     }
     ti.rml.gq[[q]] = sweep(matrix(ti.rml[[q]], nrow = n.i[[q]],
-                     ncol = gq.points), MARGIN = 2, gq$nodes, `*`) + ti.rpl[[q]]
+                                  ncol = gq.points), MARGIN = 2, gq$nodes, `*`) + ti.rpl[[q]]
     ti.rml.gq.w[[q]] = sweep(matrix(ti.rml[[q]], nrow = n.i[[q]],
-                        ncol = gq.points), MARGIN = 2, gq$weights, `*`)
+                                    ncol = gq.points), MARGIN = 2, gq$weights, `*`)
     ti.rml.gq.l[[q]] = split(ti.rml.gq[[q]], rep(1:gq.points,
-                       each = n.i[[q]]))
+                                                 each = n.i[[q]]))
     ti.rml.gq.w.l[[q]] = split(ti.rml.gq.w[[q]], rep(1:gq.points,
-                         each = n.i[[q]]))
+                                                     each = n.i[[q]]))
     ti.rml.gq.w.psi[[q]] = lapply(ti.rml.gq.l[[q]], function(a) psif(a,
-                           b.knots, i.knots[[q]]))
+                                                                     b.knots, i.knots[[q]]))
     Rtemp = matrix(0, nrow = n.basis[[q]], ncol = n.basis[[q]])
     xknots = c(rep(t.min, dgr), i.knots[[q]], rep(t.max, dgr))
     for(ii in 1:n.basis[[q]]){
@@ -190,12 +190,12 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
           kntsum = 0
           for(kk in 1:(length(kntset) - 1)){
             kntsum = kntsum + splines2::mSpline(kntset[kk],
-                     knots = i.knots[[q]], degree = dgr, intercept =
-                     basis.intercept, Boundary.knots = b.knots, derivs =
-                     2)[ii]*splines2::mSpline(kntset[kk], knots = i.knots[[q]],
-                     degree = dgr, intercept = basis.intercept,
-                     Boundary.knots = b.knots, derivs = 2)[jj]*(kntset[kk + 1] -
-                     kntset[kk])
+                                                knots = i.knots[[q]], degree = dgr, intercept =
+                                                  basis.intercept, Boundary.knots = b.knots, derivs =
+                                                  2)[ii]*splines2::mSpline(kntset[kk], knots = i.knots[[q]],
+                                                                           degree = dgr, intercept = basis.intercept,
+                                                                           Boundary.knots = b.knots, derivs = 2)[jj]*(kntset[kk + 1] -
+                                                                                                                        kntset[kk])
           }
           Rtemp[ii, jj] = kntsum
         }
@@ -216,6 +216,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     else NA
     oldlambda[[q]] = control$lambda[q]
   }
+  oldgamm <- rep(0, o)
+  newgamm <- rep(0, o)
   n.e.all = sum(unlist(n.e))
   n.i.all = sum(unlist(n.i))
   te.PSI.qr <- ti.gq.PSI.qr <- ti.gq.psi.qr <- te.psi.qr <- list()
@@ -225,9 +227,9 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       te.PSI.r[[r]] = if(n.e[[q]]!=0) PSIf(te[[q]], b.knots, i.knots[[r]])
       else NA
       ti.gq.PSI.r[[r]] = lapply(ti.rml.gq.l[[q]], function(a) PSIf(a,
-                         b.knots, i.knots[[r]]))
+                                                                   b.knots, i.knots[[r]]))
       ti.gq.psi.r[[r]] = lapply(ti.rml.gq.l[[q]], function(a) psif(a,
-                         b.knots, i.knots[[r]]))
+                                                                   b.knots, i.knots[[r]]))
       te.psi.r[[r]] = if(n.e[[q]]!=0) psif(te[[q]], b.knots, i.knots[[r]])
       else NA
     }
@@ -345,9 +347,9 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       }
       else {NA}
       pi.ze[[q]] <- exp(data.matrix(ze[[q]]) %*% gamm[[q]]) / (1 +
-                     exp(data.matrix(ze[[q]]) %*% gamm[[q]]))
+                                                                 exp(data.matrix(ze[[q]]) %*% gamm[[q]]))
       pi.zi[[q]] <- exp(data.matrix(zi[[q]]) %*% gamm[[q]]) / (1 +
-                     exp(data.matrix(zi[[q]]) %*% gamm[[q]]))
+                                                                 exp(data.matrix(zi[[q]]) %*% gamm[[q]]))
       zr.ezg[[q]] <- exp(data.matrix(zr) %*% gamm[[r]])
       pi.zr[[q]] <- zr.ezg[[q]] / (1 + zr.ezg[[q]])
       tr.Sr.r[[q]] <- exp(-tr.H.q[[q]])
@@ -369,12 +371,12 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       ze.ezg[[r]] <- exp(data.matrix(ze[[r]]) %*% gamm[[r]])
       zi.ezg[[r]] <- exp(data.matrix(zi[[r]]) %*% gamm[[r]])
       ze.C.r[[r]] <- 1 /
-      (1 + ze.ezg[[r]])
+        (1 + ze.ezg[[r]])
       zi.C.r[[r]] <- 1 /
         (1 + zi.ezg[[r]])
       tr.Sr.q[[r]] <- exp(-tr.H.q[[r]])
       zr.D.q[[r]] <- (zr.ezg[[r]]*(tr.Sr.q[[r]]-1)) / ((1+zr.ezg[[r]]) *
-                     (tr.Sr.q[[r]] * zr.ezg[[r]] + 1))
+                                                         (tr.Sr.q[[r]] * zr.ezg[[r]] + 1))
       zr.D2.q[[r]] <- ((tr.Sr.q[[r]]-1)*zr.ezg[[r]]*(tr.Sr.q[[r]]*2*zr.ezg[[r]]-1)) /
         ((zr.ezg[[r]]^2)*(tr.Sr.q[[r]]*zr.ezg[[r]]+1)^2)
       zr.pi.q[[r]] <- zr.ezg[[r]] / (1 + zr.ezg[[r]])
@@ -387,14 +389,14 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     out
   }
   updscorebeta <- function(ti.h.q, ti.S.gq.q, ti.gq.H0.qr, xi.exb.qr,
-                  ti.rml.gq.w){
+                           ti.rml.gq.w){
     ti.A.qr = list()
     for(q in 1:n.risk){
       ti.A.r = list()
       for(r in 1:n.risk){
         ti.A.r[[r]] = if(n.i[[q]]!=0) {rowSums(ti.h.q[[q]] * ti.S.gq.q[[q]] *
-                      ((q==r) - ti.gq.H0.qr[[q]][[r]] *
-                      as.vector(xi.exb.qr[[q]][[r]])) * ti.rml.gq.w[[q]])}
+                                                 ((q==r) - ti.gq.H0.qr[[q]][[r]] *
+                                                    as.vector(xi.exb.qr[[q]][[r]])) * ti.rml.gq.w[[q]])}
         else {NA}
       }
       ti.A.qr[[q]] = ti.A.r
@@ -407,8 +409,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     ti.S.gq.q.l = list()
     for(q in 1:n.risk){
       ti.S.gq.q.l[[q]] = if(n.i[[q]]!=0) {split(ti.S.gq.q[[q]],
-                         rep(1:ncol(ti.S.gq.q[[q]]), each =
-                         nrow(ti.S.gq.q[[q]])))}
+                                                rep(1:ncol(ti.S.gq.q[[q]]), each =
+                                                      nrow(ti.S.gq.q[[q]])))}
       else NA
     }
     ti.B1.qr = ti.B2.qr = list()
@@ -417,20 +419,20 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       for(r in 1:n.risk){
         if(q==r){
           ti.B1.r[[r]] = if(n.i[[q]]!=0) {Reduce("+", mapply(function(a,b,c) a *
-                         as.vector(b) * as.vector(c), ti.gq.psi.qr[[q]][[r]],
-                         ti.S.gq.q.l[[q]], ti.rml.gq.w.l[[q]],
-                         SIMPLIFY = FALSE))}
+                                                               as.vector(b) * as.vector(c), ti.gq.psi.qr[[q]][[r]],
+                                                             ti.S.gq.q.l[[q]], ti.rml.gq.w.l[[q]],
+                                                             SIMPLIFY = FALSE))}
           else NA
         }
         else{
           ti.B1.r[[r]] = if(n.i[[q]]!=0) {matrix(0, nrow = n.i[[q]],
-                         ncol = n.basis[[r]])}
+                                                 ncol = n.basis[[r]])}
           else NA
         }
         ti.B2.r[[r]] = if(n.i[[q]]!=0) {Reduce("+", mapply(function(a,b,c,d) a *
-                       b * c * d * as.vector(xi.exb.qr[[q]][[q]]),
-                       ti.h0.q.l[[q]], ti.gq.PSI.qr[[q]][[r]], ti.S.gq.q.l[[q]],
-                       ti.rml.gq.w.l[[q]], SIMPLIFY = FALSE))}
+                                                             b * c * d * as.vector(xi.exb.qr[[q]][[q]]),
+                                                           ti.h0.q.l[[q]], ti.gq.PSI.qr[[q]][[r]], ti.S.gq.q.l[[q]],
+                                                           ti.rml.gq.w.l[[q]], SIMPLIFY = FALSE))}
         else NA
       }
       ti.B1.qr[[q]] = ti.B1.r
@@ -444,37 +446,37 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
   theta.num.1 <- theta.den.1 <- gammascore.Z <- gammascore.1 <- list()
   for(q in 1:n.risk){
     betascore.X[[q]] = Reduce("rbind", list(if(length(tr)!=0) xr,
-    if(n.e[[q]]!=0) xe[[q]], Reduce("rbind",
-    mapply(function(a,b) if(a!=0) b, n.e, xe,
-    SIMPLIFY=FALSE)), Reduce("rbind", mapply(function(a,b)
-    if (a!=0) b, n.i, xi, SIMPLIFY = FALSE))))
+                                            if(n.e[[q]]!=0) xe[[q]], Reduce("rbind",
+                                                                            mapply(function(a,b) if(a!=0) b, n.e, xe,
+                                                                                   SIMPLIFY=FALSE)), Reduce("rbind", mapply(function(a,b)
+                                                                                     if (a!=0) b, n.i, xi, SIMPLIFY = FALSE))))
     betascore.1[[q]] = rep(1, nrow(betascore.X[[q]]))
     betahess.X[[q]] = data.matrix(Reduce("rbind", list(if(length(tr)!=0) xr,
-    Reduce("rbind", mapply(function(a,b) if(a!=0) b, n.e, xe,
-    SIMPLIFY=FALSE)), Reduce("rbind", mapply(function(a,b)
-    if(a!=0) b, n.i, xi, SIMPLIFY = FALSE)))))
+                                                       Reduce("rbind", mapply(function(a,b) if(a!=0) b, n.e, xe,
+                                                                              SIMPLIFY=FALSE)), Reduce("rbind", mapply(function(a,b)
+                                                                                if(a!=0) b, n.i, xi, SIMPLIFY = FALSE)))))
     hess.AA.x[[q]] = data.matrix(Reduce("rbind", list(if(length(tr)!=0) xr,
-    Reduce("rbind",mapply(function(a,b) if(a!=0) b, n.e, xe,
-    SIMPLIFY = FALSE)), Reduce("rbind", mapply(function(a,b) if(a!=0) b, n.i,
-    xi, SIMPLIFY = FALSE)))))
+                                                      Reduce("rbind",mapply(function(a,b) if(a!=0) b, n.e, xe,
+                                                                            SIMPLIFY = FALSE)), Reduce("rbind", mapply(function(a,b) if(a!=0) b, n.i,
+                                                                                                                       xi, SIMPLIFY = FALSE)))))
     theta.num.1[[q]] = matrix(1, ncol = 1, nrow = n.e[[q]] + sum(unlist(n.i)))
     theta.den.1[[q]] = matrix(1, ncol = 1, nrow = n.r + sum(unlist(n.e)) +
                                 sum(unlist(n.i)))
     gammascore.Z[[q]] <- data.matrix(Reduce("rbind",
-                         list(if(length(tr)!=0) zr, if(n.e[[q]]!=0) ze[[q]]),
-                         if(n.i[[q]]!=0) zi[[q]]))
+                                            list(if(length(tr)!=0) zr, if(n.e[[q]]!=0) ze[[q]]),
+                                            if(n.i[[q]]!=0) zi[[q]]))
     gammascore.1[[q]] <- rep(1, nrow(gammascore.Z[[q]]))
   }
   hess.AA.x.diag = as.matrix(Matrix::bdiag(hess.AA.x))
   updhessian <- function(ti.S.gq.q, ti.h.q, gq.points, n.i, ti.gq.H0.qr,
-                xi.exb.qr, ti.rml.gq.w, ti.gq.psi.qr, ti.gq.PSI.qr, tr.H.q,
-                te.H.qr, ti.F.q, ti.A.qr, tr.PSI, te.PSI.qr, ti.B1.qr,
-                ti.B2.qr, te.psi.qr, theta, xr.exb.q, xe.exb.qr, lambda,
-                R.mat, ze.ezg, zi.ezg, gamm, gammascore.Z, zr.D2.q){
+                         xi.exb.qr, ti.rml.gq.w, ti.gq.psi.qr, ti.gq.PSI.qr, tr.H.q,
+                         te.H.qr, ti.F.q, ti.A.qr, tr.PSI, te.PSI.qr, ti.B1.qr,
+                         ti.B2.qr, te.psi.qr, theta, xr.exb.q, xe.exb.qr, lambda,
+                         R.mat, ze.ezg, zi.ezg, gamm, gammascore.Z, zr.D2.q){
     ti.h.q.l = ti.gq.H.qr =  list()
     for(q in 1:n.risk){
       ti.h.q.l[[q]] = if(n.i[[q]]!=0) {split(ti.h.q[[q]], rep((1:gq.points),
-      each = n.i[[q]]))}
+                                                              each = n.i[[q]]))}
       else NA
       ti.gq.H.r = list()
       for(r in 1:n.risk){ if(n.i[[q]]!=0){ti.gq.H.r[[r]] =
@@ -491,26 +493,26 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         for(t in 1:n.risk){
           if(q==r & r==t & q == t){
             ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
-            ti.S.gq.q[[q]] * (1 - 3*ti.gq.H.qr[[q]][[r]] +
-            ti.gq.H.qr[[q]][[r]]^2)) * ti.rml.gq.w[[q]])}
+                                                         ti.S.gq.q[[q]] * (1 - 3*ti.gq.H.qr[[q]][[r]] +
+                                                                             ti.gq.H.qr[[q]][[r]]^2)) * ti.rml.gq.w[[q]])}
             else {NA}
           }
           else if(q==r & r!=t & q!=t){
             ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
-            ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[t]] *(ti.gq.H.qr[[q]][[r]] - 1))
-            * ti.rml.gq.w[[q]])}
+                                                         ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[t]] *(ti.gq.H.qr[[q]][[r]] - 1))
+                                                      * ti.rml.gq.w[[q]])}
             else {NA}
           }
           else if((q!=r & q==t & r!=t) | (q!=r & q!=t & r==t)){
             ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
-            ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[r]] *(ti.gq.H.qr[[q]][[t]] - 1))
-            * ti.rml.gq.w[[q]])}
+                                                         ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[r]] *(ti.gq.H.qr[[q]][[t]] - 1))
+                                                      * ti.rml.gq.w[[q]])}
             else {NA}
           }
           else if(q!=r & q!=t & r!=t){
             ti.AA.jtk[[t]] = if(n.i[[q]]!=0) {rowSums((ti.h.q[[q]] *
-            ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[r]] * ti.gq.H.qr[[q]][[t]])
-            * ti.rml.gq.w[[q]])}
+                                                         ti.S.gq.q[[q]] * ti.gq.H.qr[[q]][[r]] * ti.gq.H.qr[[q]][[t]])
+                                                      * ti.rml.gq.w[[q]])}
             else {NA}
           }
           ti.AB.ju = list()
@@ -518,45 +520,45 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
             if(q==r & q==t & r==t){
               ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
                 (ti.S.gq.q[[q]][,w] * ti.gq.psi.qr[[q]][[t]][[w]] +
-                ti.h.q[[q]][,w]* ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
-                ti.gq.PSI.qr[[q]][[t]][[w]] - 2 * ti.h.q[[q]][,w] *
-                ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
-                ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
-                ti.gq.psi.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+                   ti.h.q[[q]][,w]* ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
+                   ti.gq.PSI.qr[[q]][[t]][[w]] - 2 * ti.h.q[[q]][,w] *
+                   ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                   ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
+                   ti.gq.psi.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
               }
               else {NA}
             }
             else if(q==r & q!=t & r!=t){
               ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
                 (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
-                ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+                   ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                   ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                   ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
               }
               else {NA}
             }
             else if(q!=r & q==t & r!=t){
               ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
                 (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
-                ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
-                ti.gq.psi.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+                   ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                   ti.S.gq.q[[q]][,w] * ti.gq.H.qr[[q]][[r]][,w] *
+                   ti.gq.psi.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
               }
               else {NA}
             }
             else if(q!=r & q!=t & r==t){
               ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
                 (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
-                ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+                   ti.gq.H.qr[[q]][[r]][,w] * ti.gq.PSI.qr[[q]][[t]][[w]] -
+                   ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
+                   ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
               }
               else {NA}
             }
             else if(q!=r & q!=t & r!=t){
               ti.AB.ju[[w]] = if(n.i[[q]]!=0) {
                 (ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
+                   ti.gq.PSI.qr[[q]][[t]][[w]]) * ti.rml.gq.w[[q]][,w]
               }
               else {NA}
             }
@@ -575,10 +577,10 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                       ti.gq.PSI.qr[[q]][[t]][[w]][,z] *
                       ti.rml.gq.w[[q]][,w]
                     ti.BB2[[w]] = (ti.S.gq.q[[q]][,w] *
-                      ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
-                      ti.gq.psi.qr[[q]][[t]][[w]][,z] - ti.h.q[[q]][,w]
-                      * ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
-                      ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                                     ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                                     ti.gq.psi.qr[[q]][[t]][[w]][,z] - ti.h.q[[q]][,w]
+                                   * ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                                     ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
                   }
                   else if(q==r & q!=t & r!=t){
                     ti.BB1[[w]] = -ti.S.gq.q[[q]][,w] *
@@ -586,22 +588,22 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                       ti.gq.PSI.qr[[q]][[t]][[w]][,z] *
                       ti.rml.gq.w[[q]][,w]
                     ti.BB2[[w]] = (- ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                      ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
-                      ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                                     ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                                     ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
                   }
                   else if(q!=r & q==t & r!=t){
                     ti.BB1[[w]] = 0
                     ti.BB2[[w]] = (ti.S.gq.q[[q]][,w] *
-                      ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
-                      ti.gq.psi.qr[[q]][[t]][[w]][,z] - ti.h.q[[q]][,w]
-                      * ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
-                      ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                                     ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                                     ti.gq.psi.qr[[q]][[t]][[w]][,z] - ti.h.q[[q]][,w]
+                                   * ti.S.gq.q[[q]][,w] * ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                                     ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
                   }
                   else if((q!=r & q!=t & r==t) | (q!=r & q!=t & r!=t)){
                     ti.BB1[[w]] = 0
                     ti.BB2[[w]] = (-ti.h.q[[q]][,w] * ti.S.gq.q[[q]][,w] *
-                       ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
-                       ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
+                                     ti.gq.PSI.qr[[q]][[r]][[w]][,u] *
+                                     ti.gq.PSI.qr[[q]][[t]][[w]][,z]) * ti.rml.gq.w[[q]][,w]
                   }
                 }
                 else{
@@ -675,8 +677,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   xj.i = c(xj.i, xi[[q]][, j])
                   xk.i = c(xk.i, xi[[q]][, k])
                   AA.ti = c(AA.ti, as.vector((ti.F.q[[q]] *
-                          ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
-                          ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
+                                                ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
+                                                ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
                 }
               }
               xj = c(xj.r, xj.e, xj.i)
@@ -691,8 +693,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   xj.i = c(xj.i, xi[[q]][, j])
                   xk.i = c(xk.i, xi[[q]][, k])
                   AA.ti = c(AA.ti, as.vector((ti.F.q[[q]] *
-                          ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
-                          ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
+                                                ti.AA.qrjtk[[q]][[r]][[t]] - ti.A.qr[[q]][[r]] *
+                                                ti.A.qr[[q]][[t]]) / ti.F.q[[q]]^2))
                 }
               }
               xj = xj.i
@@ -722,7 +724,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                 -a[[t]][,u]*b[,j]*c[[t]], te.PSI.qr, xe, xe.exb.qr, n.e,
                 SIMPLIFY = FALSE))},
               unlist(mapply(function(a,b,c,d,e,f,g,h) if(h!=0) {f[,j]*g[[t]]*(
-              (a*b[[r]][[t]][,u]) - (c[[r]]*(d[[t]][,u] - e[[t]][,u]))) / a^2},
+                (a*b[[r]][[t]][,u]) - (c[[r]]*(d[[t]][,u] - e[[t]][,u]))) / a^2},
                 ti.F.q, ti.AB.qrjtu, ti.A.qr, ti.B1.qr, ti.B2.qr, xi, xi.exb.qr,
                 n.i, SIMPLIFY = FALSE))))
           }
@@ -754,8 +756,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   xj.i = c(xj.i, xi[[q]][,j])
                   AB.exb.i = c(AB.exb.i, xi.exb.qr[[q]][[t]])
                   AB.ti = c(AB.ti, ((ti.F.q[[q]]*ti.AB.qrjtu[[q]][[r]][[t]][,z])
-                          - (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
-                          ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
+                                    - (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
+                                                            ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
                 }
               }
               xj = c(xj.r, xj.e, xj.i)
@@ -770,8 +772,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   xj.i = c(xj.i,xi[[q]][,j])
                   AB.exb.i = c(AB.exb.i, xi.exb.qr[[q]][[t]])
                   AB.ti = c(AB.ti,((ti.F.q[[q]]*ti.AB.qrjtu[[q]][[r]][[t]][,z]) -
-                          (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
-                          ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
+                                     (ti.A.qr[[q]][[r]]*(ti.B1.qr[[q]][[t]][,z] -
+                                                           ti.B2.qr[[q]][[t]][,z]))) / ti.F.q[[q]]^2)
                 }
               }
               xj = xj.i
@@ -800,8 +802,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
             {-te.psi.qr[[r]][[r]][,u]*te.psi.qr[[t]][[t]][,z]/te.h0.q[[r]]^2}
             else{rep(0, n.e[[r]])}, unlist(mapply(function(a,b,c,d,e,f,g)
               if(g!=0) {f[[r]] * f[[t]] * (((a * (b[[r]][[t]][[u]][[z]] -
-            c[[r]][[t]][[u]][[z]])) - (d[[r]][,u] - e[[r]][,u]) * (d[[t]][,z] -
-             e[[t]][,z]))) / a^2}, ti.F.q, ti.BB1.qrutz, ti.BB2.qrutz, ti.B1.qr,
+                                                    c[[r]][[t]][[u]][[z]])) - (d[[r]][,u] - e[[r]][,u]) * (d[[t]][,z] -
+                                                                                                             e[[t]][,z]))) / a^2}, ti.F.q, ti.BB1.qrutz, ti.BB2.qrutz, ti.B1.qr,
               ti.B2.qr, xi.exb.qr, n.i, SIMPLIFY = FALSE))))
           }
           hess.BBtz.mat[[t]] = Reduce("rbind", hess.BBz.mat)
@@ -832,11 +834,11 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   BB.exb.r.i = c(BB.exb.r.i, xi.exb.qr[[q]][[r]])
                   BB.exb.t.i = c(BB.exb.t.i, xi.exb.qr[[q]][[t]])
                   BB.ti = c(BB.ti, (((ti.F.q[[q]] *
-                          (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
-                          ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
-                          (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
-                          (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
-                          ti.F.q[[q]]^2)
+                                        (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
+                                           ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
+                                       (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
+                                       (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
+                              ti.F.q[[q]]^2)
                 }
               }
             }
@@ -847,10 +849,10 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
                   BB.exb.r.i = c(BB.exb.r.i, xi.exb.qr[[q]][[r]])
                   BB.exb.t.i = c(BB.exb.t.i, xi.exb.qr[[q]][[t]])
                   BB.ti = c(BB.ti, (((ti.F.q[[q]] *
-                          (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
-                          ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
-                          (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
-                          (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
+                                        (ti.BB1.qrutz[[q]][[r]][[t]][[u]][[z]] -
+                                           ti.BB2.qrutz[[q]][[r]][[t]][[u]][[z]])) -
+                                       (ti.B1.qr[[q]][[r]][,u] - ti.B2.qr[[q]][[r]][,u]) *
+                                       (ti.B1.qr[[q]][[t]][,z] - ti.B2.qr[[q]][[t]][,z]))) /
                               ti.F.q[[q]]^2)
                 }
               }
@@ -870,15 +872,15 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
 
     for(r in 1:n.risk){
       gammahess.mat[[r]] <- diag(c(if(n.r!=0) zr.D2.q[[r]],
-                            if(n.e[[r]]!=0) ze.ezg[[r]]^2 /
-                            (1 + ze.ezg[[r]]^3),
-                            if(n.i[[r]]!=0) zi.ezg[[r]]^2 /
-                            (1 + zi.ezg[[r]]^3)))
+                                   if(n.e[[r]]!=0) ze.ezg[[r]]^2 /
+                                     (1 + ze.ezg[[r]]^3),
+                                   if(n.i[[r]]!=0) zi.ezg[[r]]^2 /
+                                     (1 + zi.ezg[[r]]^3)))
       gammahess[[r]] <- t(gammascore.Z[[r]]) %*% gammahess.mat[[r]] %*%
-                        gammascore.Z[[r]]
+        gammascore.Z[[r]]
     }
     lambdaR = as.matrix(Matrix::bdiag(mapply(function(a,b)  as.vector(a)*b,
-              oldlambda, R.mat, SIMPLIFY = FALSE)))
+                                             oldlambda, R.mat, SIMPLIFY = FALSE)))
     hess.BB = hess.BB.mat - 2*lambdaR
     BB.mat.pen = BB.mat - 2*lambdaR
     hess.old = cbind(rbind(hess.AA, hess.AB), rbind(t(hess.AB), hess.BB))
@@ -903,28 +905,22 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       # base <- updbase(oldtheta, tr.PSI, te.psi, te.PSI.qr, ti.gq.PSI.qr,
       #                 ti.rml.gq.w.psi)
       base <- updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
-               ti.gq.PSI.qr)
+                      ti.gq.PSI.qr)
       llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                oldgamm, ze, zi, zr)
+                           base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                           oldgamm, ze, zi, zr)
       R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
                      oldlambda, SIMPLIFY = FALSE)
       llik0 = sum(log(unlist(llparms$te.h.q)+1e-12),
                   -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                   -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
                   log(unlist(llparms$pi.zi)), log(unlist(llparms$tr.Sr.pop.r)), na.rm = TRUE)
-      for(r in 1:n.risk){
-        base <- updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
-        ti.gq.PSI.qr)
-        llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-        base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-        oldgamm, ze, zi, zr)
         gammaparms <- updscoregamm(oldgamm, ze, zi, zr, llparms$tr.H.q, r)
         gammascore.mat[[r]] <- diag(c(if(n.r!=0) ((llparms$tr.Sr.r[[r]] - 1) *
-                               llparms$zr.ezg[[r]]) / ((llparms$tr.Sr.pop.r[[r]])
+                              llparms$zr.ezg[[r]]) / ((llparms$tr.Sr.pop.r[[r]])
                               * (1+llparms$zr.ezg[[r]])^2), if(n.e[[r]]!=0)
-                               gammaparms$ze.C.r[[r]], if(n.i[[r]]!=0)
-                               gammaparms$zi.C.r[[r]]))
+                              gammaparms$ze.C.r[[r]], if(n.i[[r]]!=0)
+                              gammaparms$zi.C.r[[r]]))
         # gammascore.mat[[r]] <- diag(c(if(n.r!=0) ((llparms$tr.Sr.r[[r]] - 1) *
         #                        llparms$zr.ezg[[r]]) / ((llparms$tr.Sr.r[[r]] * llparms$zr.ezg[[r]] +
         #                        1) * (1+llparms$zr.ezg[[r]])), if(n.e[[r]]!=0)
@@ -933,16 +929,16 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         gammascore[[r]] <- t(gammascore.Z[[r]]) %*% gammascore.mat[[r]] %*%
           data.matrix(gammascore.1[[r]])
         gammahess.mat[[r]] <- diag(c(if(n.r!=0) (-(llparms$tr.Sr.r[[r]] - 1) *
-                              llparms$zr.ezg[[r]] * (llparms$tr.Sr.pop.r[[r]] *
-                              (llparms$zr.ezg[[r]]+1)^2  - llparms$zr.ezg[[r]] * ((llparms$tr.Sr.r[[r]] - 1)
-                              + llparms$tr.Sr.pop.r[[r]] * 2 * (1 +
-                              llparms$zr.ezg[[r]])))) /
-                              (llparms$tr.Sr.pop.r[[r]] * (1 +
-                              llparms$zr.ezg[[r]])^2)^2,
-                              if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]/
-                              (1 + gammaparms$ze.ezg[[r]])^2,
-        if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]] /
-        (1 + gammaparms$zi.ezg[[r]])^2))
+                                                   llparms$zr.ezg[[r]] * (llparms$tr.Sr.pop.r[[r]] *
+                                                                            (llparms$zr.ezg[[r]]+1)^2  - llparms$zr.ezg[[r]] * ((llparms$tr.Sr.r[[r]] - 1)
+                                                                                                                                + llparms$tr.Sr.pop.r[[r]] * 2 * (1 +
+                                                                                                                                                                    llparms$zr.ezg[[r]])))) /
+                                       (llparms$tr.Sr.pop.r[[r]] * (1 +
+                                                                      llparms$zr.ezg[[r]])^2)^2,
+                                     if(n.e[[r]]!=0) gammaparms$ze.ezg[[r]]/
+                                       (1 + gammaparms$ze.ezg[[r]])^2,
+                                     if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]] /
+                                       (1 + gammaparms$zi.ezg[[r]])^2))
         # gammahess.mat[[r]] <- diag(c(if(n.r!=0) (-(llparms$tr.Sr.r[[r]] - 1) * llparms$zr.ezg[[r]] *
         #                       (llparms$tr.Sr.r[[r]] * llparms$zr.ezg[[r]]* llparms$zr.ezg[[r]] - 1))  /
         #                       (((llparms$tr.Sr.r[[r]] * llparms$zr.ezg[[r]] + 1)^2) * (1 +
@@ -952,7 +948,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         #                       if(n.i[[r]]!=0) gammaparms$zi.ezg[[r]] /
         #                       (1 + gammaparms$zi.ezg[[r]])^2))
         gammahess[[r]] <- solve(t(gammascore.Z[[r]]) %*% gammahess.mat[[r]] %*%
-        gammascore.Z[[r]])
+                                  gammascore.Z[[r]])
         gammainc[[r]] <- gammahess[[r]] %*% gammascore[[r]]
         #gammainc[[r]] <- t(1 / gammascore.Z[[r]]) %*% diag(c(if(n.e[[r]]!=0) (gammaparms$ze.ezg[[r]]+1)/
         #                          (gammaparms$ze.ezg[[r]]),
@@ -960,8 +956,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         #                          (gammaparms$zi.ezg[[r]])^2)) %*% gammascore.1[[r]]
         newgamm[[r]] = oldgamm[[r]] + as.vector(gammainc[[r]])
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-        base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-        newgamm, ze, zi, zr)
+                             base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                             newgamm, ze, zi, zr)
         llik1 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                      -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                      -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -970,8 +966,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         while(llik1 <= llik0){
           newgamm[[r]] = oldgamm[[r]] + (ome * as.vector(gammainc[[r]]))
           llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                    base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                    newgamm, ze, zi, zr)
+                               base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                               newgamm, ze, zi, zr)
           llik1 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                        -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                        -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -983,9 +979,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         }
         llik0 = llik1
         oldgamm = newgamm
-      }
       R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
-              oldlambda, SIMPLIFY = FALSE)
+                     oldlambda, SIMPLIFY = FALSE)
       llik1 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                    -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -994,37 +989,37 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
                        te.PSI.qr, ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                  base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  newgamm, ze, zi, zr)
+                             base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                             newgamm, ze, zi, zr)
         betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
-                    base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
+                                 base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
         betascore.mat[[r]] = diag(c(if(length(tr)!=0) -llparms$pi.zr[[r]] *
-                            llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] /
-                            llparms$tr.Sr.pop.r[[r]], rep(1, n.e[[r]]),
-                            unlist(mapply(function(a,b)
-                             if(a!=0) -b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
-                             FALSE)), unlist(mapply(function(a,b,c)
-                             if(a!=0) b[[r]] / c, n.i, betaparms$ti.A.qr,
-                             llparms$ti.F.q, SIMPLIFY = FALSE))))
+                                      llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] /
+                                      llparms$tr.Sr.pop.r[[r]], rep(1, n.e[[r]]),
+                                    unlist(mapply(function(a,b)
+                                      if(a!=0) -b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
+                                        FALSE)), unlist(mapply(function(a,b,c)
+                                          if(a!=0) b[[r]] / c, n.i, betaparms$ti.A.qr,
+                                          llparms$ti.F.q, SIMPLIFY = FALSE))))
         betascore[[r]] = t(betascore.X[[r]]) %*% betascore.mat[[r]] %*%
-                        betascore.1[[r]]
+          betascore.1[[r]]
         betahess.mat[[r]] = diag(c(if(length(tr)!=0) (llparms$pi.zr[[r]] *
-                            llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] *
-                            (llparms$tr.Sr.pop.r[[r]] * (llparms$tr.H.q[[r]]
-                            - 1) - llparms$pi.zr[[r]] * llparms$tr.Sr.r[[r]] *
-                            llparms$tr.H.q[[r]])) / llparms$tr.Sr.pop.r[[r]]^2,
-                            unlist(mapply(function(a,b)
-                            if(a!=0) b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
-                            FALSE)),  unlist(mapply(function(a,b,c) if(a!=0)
-                            (b[[r]] / c) ^ 2, n.i, betaparms$ti.A.qr,
-                            llparms$ti.F.q, SIMPLIFY = FALSE))))
+                                                        llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] *
+                                                        (llparms$tr.Sr.pop.r[[r]] * (llparms$tr.H.q[[r]]
+                                                                                     - 1) - llparms$pi.zr[[r]] * llparms$tr.Sr.r[[r]] *
+                                                           llparms$tr.H.q[[r]])) / llparms$tr.Sr.pop.r[[r]]^2,
+                                   unlist(mapply(function(a,b)
+                                     if(a!=0) b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
+                                       FALSE)),  unlist(mapply(function(a,b,c) if(a!=0)
+                                         (b[[r]] / c) ^ 2, n.i, betaparms$ti.A.qr,
+                                         llparms$ti.F.q, SIMPLIFY = FALSE))))
         betahess[[r]] = solve(t(betahess.X[[r]]) %*% betahess.mat[[r]] %*%
-                        betahess.X[[r]])
+                                betahess.X[[r]])
         betainc[[r]] = betahess[[r]] %*% betascore[[r]]
         newbeta[[r]] = oldbeta[[r]] + as.vector(betainc[[r]])
         llparms = updllparms(newbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                  base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  oldgamm, ze, zi, zr)
+                             base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                             oldgamm, ze, zi, zr)
         llik2 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                      -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                      -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -1033,8 +1028,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         while(llik2 <= llik1){
           newbeta[[r]] = oldbeta[[r]] + (ome * as.vector(betainc[[r]]))
           llparms = updllparms(newbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                    base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                    newgamm, ze, zi, zr)
+                               base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                               newgamm, ze, zi, zr)
           llik2 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                        -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                        -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -1048,7 +1043,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         oldbeta = newbeta
       }
       R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
-              oldlambda, SIMPLIFY = FALSE)
+                     oldlambda, SIMPLIFY = FALSE)
       llik2 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                    -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -1056,57 +1051,57 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
 
       for(r in 1:n.risk){
         base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
-               te.PSI.qr, ti.gq.PSI.qr)
+                       te.PSI.qr, ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                  base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  oldgamm, ze, zi, zr)
+                             base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                             oldgamm, ze, zi, zr)
         thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
-                     ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
+                                   ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
         num.mat[[r]] = Reduce("rbind", list(if(n.e[[r]]!=0) te.psi[[r]] /
-                       as.vector(base$te.h0.q[[r]]), Reduce("rbind",
-                       mapply(function(a,b,c) if(a!=0) b[[r]] / as.vector(c),
-                       n.i, thetaparms$ti.B1.qr, llparms$ti.F.q,
-                       SIMPLIFY = FALSE))))
+                                              as.vector(base$te.h0.q[[r]]), Reduce("rbind",
+                                                                                   mapply(function(a,b,c) if(a!=0) b[[r]] / as.vector(c),
+                                                                                          n.i, thetaparms$ti.B1.qr, llparms$ti.F.q,
+                                                                                          SIMPLIFY = FALSE))))
         dJ[[r]] = 2*(oldtheta[[r]] %*% R.mat[[r]])
         num.exb[[r]] = Reduce("rbind", list(matrix(1, nrow = n.e[[r]],
-                       ncol = 1), Reduce("rbind", mapply(function(a,b) if(a!=0)
-                       {b[[r]]}, n.i, llparms$xi.exb.qr,
-                       SIMPLIFY = FALSE))))
+                                                   ncol = 1), Reduce("rbind", mapply(function(a,b) if(a!=0)
+                                                   {b[[r]]}, n.i, llparms$xi.exb.qr,
+                                                   SIMPLIFY = FALSE))))
         thetascore.num[[r]] = (as.vector(t(theta.num.1[[r]]) %*%
-                              (num.mat[[r]]*as.vector(num.exb[[r]])))) -
-                              as.vector(oldlambda[[r]]) * pmin(dJ[[r]], 0) +
-                              1e-12
+                                           (num.mat[[r]]*as.vector(num.exb[[r]])))) -
+          as.vector(oldlambda[[r]]) * pmin(dJ[[r]], 0) +
+          1e-12
         den.mat[[r]] = Reduce("rbind", list(if(length(tr)!=0) (tr.PSI[[r]] *
-                       as.vector(llparms$tr.Sr.r[[r]]) *
-                       as.vector(llparms$pi.zr[[r]])) /
-                       as.vector(llparms$tr.Sr.pop.r[[r]]), Reduce("rbind",
-                       mapply(function(a,b) if(a!=0) b[[r]],
-                       n.e, te.PSI.qr, SIMPLIFY = FALSE)),
-                       Reduce("rbind", mapply(function(a,b,c) if(a!=0)
-                       {b[[r]] / c}, n.i, thetaparms$ti.B2.qr, llparms$ti.F.q,
-                       SIMPLIFY = FALSE))))
+                                                                 as.vector(llparms$tr.Sr.r[[r]]) *
+                                                                 as.vector(llparms$pi.zr[[r]])) /
+                                              as.vector(llparms$tr.Sr.pop.r[[r]]), Reduce("rbind",
+                                                                                          mapply(function(a,b) if(a!=0) b[[r]],
+                                                                                                 n.e, te.PSI.qr, SIMPLIFY = FALSE)),
+                                            Reduce("rbind", mapply(function(a,b,c) if(a!=0)
+                                            {b[[r]] / c}, n.i, thetaparms$ti.B2.qr, llparms$ti.F.q,
+                                            SIMPLIFY = FALSE))))
         den.exb[[r]] = Reduce("rbind",  list(if(length(tr)!=0)
-                       llparms$xr.exb.q[[r]], Reduce("rbind",
-                       mapply(function(a,b) if(a!=0) b[[r]], n.e,
-                       llparms$xe.exb.qr, SIMPLIFY = FALSE)),  Reduce ("rbind",
-                       mapply(function(a,b) if(a!=0) b[[r]], n.i,
-                       llparms$xi.exb.qr, SIMPLIFY = FALSE))))
+          llparms$xr.exb.q[[r]], Reduce("rbind",
+                                        mapply(function(a,b) if(a!=0) b[[r]], n.e,
+                                               llparms$xe.exb.qr, SIMPLIFY = FALSE)),  Reduce ("rbind",
+                                                                                               mapply(function(a,b) if(a!=0) b[[r]], n.i,
+                                                                                                      llparms$xi.exb.qr, SIMPLIFY = FALSE))))
         thetascore.den[[r]] = as.vector(t(theta.den.1[[r]]) %*%
-                              (den.mat[[r]] * as.vector(den.exb[[r]]))) +
-                              as.vector(oldlambda[[r]]) * pmax(dJ[[r]], 0) +
-                              1e-12
+                                          (den.mat[[r]] * as.vector(den.exb[[r]]))) +
+          as.vector(oldlambda[[r]]) * pmax(dJ[[r]], 0) +
+          1e-12
         thetascore.half[[r]] = oldtheta[[r]]*(thetascore.num[[r]] /
-                               thetascore.den[[r]])
+                                                thetascore.den[[r]])
         thetascore[[r]] = thetascore.num[[r]] - thetascore.den[[r]]
         newtheta[[r]] = as.vector(oldtheta[[r]] + (thetascore.half[[r]] -
-                        oldtheta[[r]]))
+                                                     oldtheta[[r]]))
         base = updbase(newtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
-               te.PSI.qr, ti.gq.PSI.qr)
+                       te.PSI.qr, ti.gq.PSI.qr)
         llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                  base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                  oldgamm, ze, zi, zr)
+                             base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                             oldgamm, ze, zi, zr)
         R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, newtheta, R.mat,
-                oldlambda, SIMPLIFY = FALSE)
+                       oldlambda, SIMPLIFY = FALSE)
         llik3 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                      -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                      -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -1114,14 +1109,14 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         ome = 0.6
         while(llik3 <= llik2){
           newtheta[[r]] = as.vector(oldtheta[[r]] + ome *
-                          (thetascore.half[[r]] - oldtheta[[r]]))
+                                      (thetascore.half[[r]] - oldtheta[[r]]))
           base = updbase(newtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
-                 te.PSI.qr, ti.gq.PSI.qr)
+                         te.PSI.qr, ti.gq.PSI.qr)
           llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-                    base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-                    oldgamm, ze, zi, zr)
+                               base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                               oldgamm, ze, zi, zr)
           R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, newtheta, R.mat,
-                  oldlambda, SIMPLIFY = FALSE)
+                         oldlambda, SIMPLIFY = FALSE)
           llik3 =  sum(log(unlist(llparms$te.h.q)+1e-12),
                        -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
                        -sum(unlist(R.pen)), log(unlist(llparms$pi.ze)),
@@ -1136,7 +1131,7 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
       }
       if(((max(mapply(function(a,b) abs(a - b), oldbeta, prev.oldbeta)) <
            control$inner.conv) & (max(mapply(function(a,b) max(abs(a - b)),
-           oldtheta, prev.oldtheta)) < control$inner.conv) &
+                                             oldtheta, prev.oldtheta)) < control$inner.conv) &
           (max(mapply(function(a,b) max(abs(a - b)), oldgamm, prev.oldgamm))))){
         break
       }
@@ -1145,21 +1140,21 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
     base = updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi,
                    te.PSI.qr, ti.gq.PSI.qr)
     llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
-              base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
-              oldgamm, ze, zi, zr)
+                         base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                         oldgamm, ze, zi, zr)
     gammaparms <- updscoregamm(oldgamm, ze, zi, zr, llparms$tr.H.q, r)
     betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
-                base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
+                             base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
     thetaparms = updscoretheta(oldtheta, llparms$ti.S.gq.q, ti.gq.psi.qr,
-                 ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
+                               ti.rml.gq.w.l, base$ti.h0.q.l, llparms$xi.exb.qr)
     hessupd = updhessian(llparms$ti.S.gq.q, llparms$ti.h.q, gq.points,
-              n.i, base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w,
-              ti.gq.psi.qr, ti.gq.PSI.qr, llparms$tr.H.q, llparms$te.H.qr,
-              llparms$ti.F.q, betaparms$ti.A.qr, tr.PSI, te.PSI.qr,
-              thetaparms$ti.B1.qr, thetaparms$ti.B2.qr, te.psi.qr, oldtheta,
-              llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat,
-              gammaparms$ze.ezg, gammaparms$zi.ezg, gamm, gammascore.Z,
-              gammaparms$zr.D2.q)
+                         n.i, base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w,
+                         ti.gq.psi.qr, ti.gq.PSI.qr, llparms$tr.H.q, llparms$te.H.qr,
+                         llparms$ti.F.q, betaparms$ti.A.qr, tr.PSI, te.PSI.qr,
+                         thetaparms$ti.B1.qr, thetaparms$ti.B2.qr, te.psi.qr, oldtheta,
+                         llparms$xr.exb.q, llparms$xe.exb.qr, oldlambda, R.mat,
+                         gammaparms$ze.ezg, gammaparms$zi.ezg, gamm, gammascore.Z,
+                         gammaparms$zr.D2.q)
   } #outer
   gamma.table <- beta.table <- theta.table <- list()
   for(r in 1:n.risk){
