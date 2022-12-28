@@ -145,5 +145,266 @@ phcshcf_mpl2 <- function(formula, risk, z, data, control, ...){
       tir[[q]] = NA
       xi[[q]] = NA
     }
+    ti.rml[[q]] = (tir[[q]] - til[[q]]) / 2
+    ti.rpl[[q]] = (tir[[q]] + til[[q]]) / 2
+    if(control$tmid==TRUE)
+      t.all.r[[q]] = c(te[[q]], tmid[[q]])
+    else
+      t.all.r[[q]] = c(te[[q]], til[[q]], tir[[q]])
+    n.per.risk[[q]] = n.e[[q]] + n.i[[q]]
+    n.iknots[[q]] = max(floor(n.per.risk[[q]]^(1/3)) - 2,1)
+    if(length(control$n.basis)!=0){
+      n.basis[[q]] = control$n.basis[[q]]
+      n.iknots[[q]] = n.basis[[q]] - 2
+    }
+    n.basis[[q]] = n.iknots[[q]] + dgr + basis.intercept
+    if(n.iknots[[q]]==1)
+      perc.iknots[[q]] = 0.5
+    else if(n.iknots[[q]]==2)
+      perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
+      length.out = 4)[2:3]
+    else
+      perc.iknots[[q]] = seq(knots.perc.limit[1], knots.perc.limit[2],
+      length.out = n.iknots[[q]])
+    i.knots[[q]]  = stats::quantile(unique(t.all.r[[q]]), prob =
+    perc.iknots[[q]], names = FALSE, na.rm = TRUE, type = 3)
+    if(!is.null(control$iknots.pos)){
+      i.knots[[q]] = control$iknots.pos[[q]]
+    }
+    ti.rml.gq[[q]] = sweep(matrix(ti.rml[[q]], nrow = n.i[[q]],
+    ncol = gq.points), MARGIN = 2, gq$nodes, `*`) + ti.rpl[[q]]
+    ti.rml.gq.w[[q]] = sweep(matrix(ti.rml[[q]], nrow = n.i[[q]],
+    ncol = gq.points), MARGIN = 2, gq$weights, `*`)
+    ti.rml.gq.l[[q]] = split(ti.rml.gq[[q]], rep(1:gq.points,
+                       each = n.i[[q]]))
+    ti.rml.gq.w.l[[q]] = split(ti.rml.gq.w[[q]], rep(1:gq.points,
+                         each = n.i[[q]]))
+    ti.rml.gq.w.psi[[q]] = lapply(ti.rml.gq.l[[q]], function(a) psif(a,
+                           b.knots, i.knots[[q]]))
+    Rtemp = matrix(0, nrow = n.basis[[q]], ncol = n.basis[[q]])
+    xknots = c(rep(t.min, dgr), i.knots[[q]], rep(t.max, dgr))
+    for(ii in 1:n.basis[[q]]){
+      for(jj in 1:n.basis[[q]]){
+        if(jj - ii<dgr){
+          kntset = xknots[xknots >= xknots[jj] & xknots <= xknots[ii+dgr]]
+          kntsum = 0
+          for(kk in 1:(length(kntset) - 1)){
+            kntsum = kntsum + splines2::mSpline(kntset[kk],
+            knots = i.knots[[q]], degree = dgr, intercept =
+            basis.intercept, Boundary.knots = b.knots, derivs =
+            2)[ii]*splines2::mSpline(kntset[kk], knots = i.knots[[q]],
+            degree = dgr, intercept = basis.intercept,
+            Boundary.knots = b.knots, derivs = 2)[jj]*(kntset[kk + 1] -
+            kntset[kk])
+          }
+          Rtemp[ii, jj] = kntsum
+        }
+      }
+    }
+    R.mat[[q]] <- Rtemp
+    R.mat[[q]][lower.tri(R.mat[[q]], diag = FALSE)] =
+      t(R.mat[[q]])[lower.tri(R.mat[[q]], diag = FALSE)]
+    oldbeta[[q]] = rep(0, p)
+    newbeta[[q]] = rep(0, p)
+    oldtheta[[q]] = rep(1, n.basis[[q]])
+    newtheta[[q]] = rep(1, n.basis[[q]])
+    tr.PSI[[q]] = if(length(tr)!=0) PSIf(tr, b.knots, i.knots[[q]])
+    else NA
+    te.psi[[q]] = if(n.e[[q]]!=0) psif(te[[q]], b.knots, i.knots[[q]])
+    else NA
+    oldlambda[[q]] = control$lambda[q]
   }
+  oldgamm <- rep(0, o)
+  newgamm <- rep(0, o)
+  n.e.all = sum(unlist(n.e))
+  n.i.all = sum(unlist(n.i))
+  te.PSI.qr <- ti.gq.PSI.qr <- ti.gq.psi.qr <- te.psi.qr <- list()
+  for(q in 1:n.risk){
+    te.PSI.r <- ti.gq.PSI.r <- ti.gq.psi.r <- te.psi.r <- list()
+    for(r in 1:n.risk){
+      te.PSI.r[[r]] = if(n.e[[q]]!=0) PSIf(te[[q]], b.knots, i.knots[[r]])
+      else NA
+      ti.gq.PSI.r[[r]] = lapply(ti.rml.gq.l[[q]], function(a) PSIf(a,
+                                                                   b.knots, i.knots[[r]]))
+      ti.gq.psi.r[[r]] = lapply(ti.rml.gq.l[[q]], function(a) psif(a,
+                                                                   b.knots, i.knots[[r]]))
+      te.psi.r[[r]] = if(n.e[[q]]!=0) psif(te[[q]], b.knots, i.knots[[r]])
+      else NA
+    }
+    te.PSI.qr[[q]] = te.PSI.r
+    ti.gq.PSI.qr[[q]] = ti.gq.PSI.r
+    ti.gq.psi.qr[[q]] = ti.gq.psi.r
+    te.psi.qr[[q]] = te.psi.r
+  }
+  max.outer = control$max.outer
+  max.iter = control$max.iter
+  updbase <- function(theta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
+                      ti.gq.PSI.qr){
+    tr.H0.q = te.h0.q = ti.h0.q = ti.h0.q.l = te.H0.qr = ti.gq.H0.qr = list()
+    ti.gq.S0r.qr = list()
+    for(q in 1:n.risk){
+      tr.H0.q[[q]] = tr.PSI[[q]] %*% theta[[q]]
+      te.h0.q[[q]] = if(n.e[[q]]!=0) {te.psi[[q]] %*% theta[[q]]}
+      else{NA}
+      ti.h0.q[[q]] = sapply(ti.rml.gq.w.psi[[q]], function(a) a %*% theta[[q]])
+      ti.h0.q.l[[q]] = split(ti.h0.q[[q]], rep(1:gq.points, each = n.i[[q]]))
+      te.H0.r <- ti.gq.H0.r <- ti.gq.S0r.r <- list()
+      for(r in 1:n.risk){
+        te.H0.r[[r]] = if(n.e[[q]]!=0){te.PSI.qr[[q]][[r]] %*% theta[[r]]}
+        else{NA}
+        ti.gq.H0.r[[r]] = sapply(ti.gq.PSI.qr[[q]][[r]], function(a) a %*%
+                                   theta[[r]])
+        ti.gq.S0r.r[[r]] = if(n.i[[q]]!=0) exp(-ti.gq.H0.r[[r]])
+      }
+      te.H0.qr[[q]] = te.H0.r
+      ti.gq.H0.qr[[q]] = ti.gq.H0.r
+      ti.gq.S0r.qr[[q]] = ti.gq.S0r.r
+    }
+    out = list(tr.H0.q=tr.H0.q, te.h0.q=te.h0.q, ti.h0.q=ti.h0.q,
+               ti.h0.q.l=ti.h0.q.l, te.H0.qr = te.H0.qr, ti.gq.H0.qr =
+                 ti.gq.H0.qr, ti.gq.S0r.qr = ti.gq.S0r.qr)
+    out
+  }
+  updllparms <- function(beta, xr, xe, tr.H0.q, xi, te.h0.q, te.H0.qr,
+                         ti.h0.q, ti.gq.S0r.qr, ti.rml.gq.w, gamm, ze, zi, zr){
+    xr.exb.q  = xe.exb.qr = tr.H.q = xi.exb.qr = te.h.q = te.H.qr = list()
+    ti.h.q = ti.Sr.gq.qr = ti.S.gq.q = ti.F.q = ze.pi = zi.pi = list()
+    zr.ezg <- pi.zr <- tr.H.r <- tr.Sr.r <- tr.Sr.pop.r <- te.S.r <- list()
+    ze.ezg <- zi.ezg <- list()
+    for(q in 1:n.risk){
+      xr.exb.q[[q]] = exp(data.matrix(xr) %*% beta[[q]])
+      tr.H.q[[q]] = tr.H0.q[[q]] * as.vector(xr.exb.q[[q]])
+      xe.exb.r = xi.exb.r = te.H.r = ti.Sr.gq.r = list()
+      for(r in 1:n.risk){
+        xe.exb.r[[r]] = exp(data.matrix(xe[[q]]) %*% beta[[r]])
+        xi.exb.r[[r]] = exp(data.matrix(xi[[q]]) %*% beta[[r]])
+        te.H.r[[r]] = te.H0.qr[[q]][[r]] * as.vector(xe.exb.r[[r]])
+        te.S.r[[r]] = exp(-te.H.r[[r]])
+        ti.Sr.gq.r[[r]] = if(n.i[[q]]!=0)
+          ti.gq.S0r.qr[[q]][[r]] ^ as.vector(xi.exb.r[[r]])
+      }
+      xe.exb.qr[[q]] = xe.exb.r
+      xi.exb.qr[[q]] = xi.exb.r
+      te.h.q[[q]] = te.h0.q[[q]] * as.vector(xe.exb.qr[[q]][[q]])
+      te.H.qr[[q]] = te.H.r
+      ti.h.q[[q]] = if(n.i[[q]]!=0)
+        ti.h0.q[[q]] * as.vector(xi.exb.qr[[q]][[q]])
+      ti.Sr.gq.qr[[q]] = ti.Sr.gq.r
+      ti.S.gq.q[[q]] = Reduce("*", ti.Sr.gq.r)
+      ti.F.q[[q]] = if(n.i[[q]]!=0) {rowSums(ti.h.q[[q]] * ti.S.gq.q[[q]] *
+                                               ti.rml.gq.w[[q]])
+      }
+      else {NA}
+      ze.ezg[[q]] <- exp(data.matrix(ze[[q]]) %*% gamm)
+      zi.ezg[[q]] <- exp(data.matrix(zi[[q]]) %*% gamm)
+      ze.pi[[q]] <- exp(data.matrix(ze[[q]]) %*% gamm) / (1 +
+                    exp(data.matrix(ze[[q]]) %*% gamm))
+      zi.pi[[q]] <- exp(data.matrix(zi[[q]]) %*% gamm) / (1 +
+                    exp(data.matrix(zi[[q]]) %*% gamm))
+      #zr.ezg[[q]] <- exp(data.matrix(zr) %*% gamm[[r]])
+      #pi.zr[[q]] <- zr.ezg[[q]] / (1 + zr.ezg[[q]])
+      tr.Sr.r[[q]] <- exp(-tr.H.q[[q]])
+      #tr.Sr.pop.r[[q]] <- pi.zr[[q]]*tr.Sr.r[[q]] + (1 - pi.zr[[q]])
+    }
+    zr.ezg <- exp(data.matrix(zr)) %*% gamm
+    zr.pi <- zr.ezg / (1+zr.ezg)
+    tr.S <- Reduce("*", tr.Sr.r)
+    tr.S.pop <- zr.pi*tr.S + (1 - zr.pi)
+    out = list(xr.exb.q = xr.exb.q, xe.exb.qr = xe.exb.qr, tr.H.q = tr.H.q,
+               xi.exb.qr = xi.exb.qr, te.h.q = te.h.q, te.H.qr = te.H.qr,
+               ti.h.q = ti.h.q, ti.Sr.gq.qr = ti.Sr.gq.qr, ti.S.gq.q = ti.S.gq.q,
+               ti.F.q = ti.F.q, zr.ezg=zr.ezg, tr.Sr.r=tr.Sr.r, tr.S=tr.S,
+               zr.pi=zr.pi, tr.S.pop=tr.S.pop, ze.pi=ze.pi, zi.pi=zi.pi,
+               ze.ezg=ze.ezg, zi.ezg=zi.ezg)
+    out
+  }
+  gammascore.z <- data.matrix(Reduce("rbind",
+                  list(if(length(tr)!=0) zr, if(sum(unlist(n.e))!=0) Reduce("rbind", ze)),
+                  if(sum(unlist(n.i))!=0) Reduce("rbind", zi)))
+  gammascore.1 <- rep(1, nrow(gammascore.z))
+  for(outer in 1:max.outer){
+    for(iter in 1:max.iter){
+      if(control$iter.disp==TRUE)
+        cat("Outer iteration", outer, "of", max.outer, ": Inner iteration",
+            iter, "of",max.iter, "\r")
+      prev.oldgamm <- oldgamm
+      prev.oldbeta <- oldbeta
+      prev.oldtheta <- oldtheta
+      base <- updbase(oldtheta, tr.PSI, te.psi, ti.rml.gq.w.psi, te.PSI.qr,
+                      ti.gq.PSI.qr)
+      llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                oldgamm, ze, zi, zr)
+      R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
+              oldlambda, SIMPLIFY = FALSE)
+      llik0 = sum(log(unlist(llparms$te.h.q)+1e-12),
+              -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+              -sum(unlist(R.pen)), log(unlist(llparms$ze.pi)),
+              log(unlist(llparms$zi.pi)), log(unlist(llparms$tr.S.pop)), na.rm = TRUE)
+      gammascore.mat <- diag(c(if(n.r!=0) ((llparms$tr.S - 1) *
+                             llparms$zr.ezg) / ((llparms$tr.S.pop)
+                             * (1+llparms$zr.ezg)^2), if(sum(unlist(n.e))!=0) 1 /
+                            (1 + unlist(llparms$ze.ezg)), if(sum(unlist(n.i))!=0) 1 /
+                            (1 + unlist(llparms$zi.ezg))))
+      gammascore <- t(gammascore.z) %*% gammascore.mat %*%
+                    data.matrix(gammascore.1)
+      gammahess.mat <- diag(c(if(n.r!=0) (-(llparms$tr.S- 1) *
+                            llparms$zr.ezg * (llparms$tr.S.pop *
+                            (llparms$zr.ezg+1)^2  - llparms$zr.ezg * ((llparms$tr.S - 1)
+                            + llparms$tr.S.pop * 2 * (1 +
+                            llparms$zr.ezg)))) /
+                            (llparms$tr.S.pop * (1 +
+                            llparms$zr.ezg)^2)^2,
+                                   if(sum(unlist(n.e))!=0) unlist(llparms$ze.ezg)/
+                                     (1 + unlist(llparms$ze.ezg))^2,
+                                   if(sum(unlist(n.i))!=0) unlist(llparms$zi.ezg)/
+                              (1 + unlist(llparms$zi.ezg))^2))
+      gammahess <- solve(t(gammascore.z) %*% gammahess.mat %*%
+                                gammascore.z)
+      gammainc <- gammahess %*% gammascore
+      newgamm = oldgamm + as.vector(gammainc)
+      llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                           base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                           newgamm, ze, zi, zr)
+      llik1 = sum(log(unlist(llparms$te.h.q)+1e-12),
+                  -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                  -sum(unlist(R.pen)), log(unlist(llparms$ze.pi)),
+                  log(unlist(llparms$zi.pi)), log(unlist(llparms$tr.S.pop)), na.rm = TRUE)
+      ome = 0.6
+      while(llik1 <= llik0){
+        newgamm = oldgamm + (ome * as.vector(gammainc))
+        llparms = updllparms(oldbeta, xr, xe, base$tr.H0.q, xi, base$te.h0.q,
+                             base$te.H0.qr, base$ti.h0.q, base$ti.gq.S0r.qr, ti.rml.gq.w,
+                             newgamm, ze, zi, zr)
+        llik1 = sum(log(unlist(llparms$te.h.q)+1e-12),
+                    -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                    -sum(unlist(R.pen)), log(unlist(llparms$ze.pi)),
+                    log(unlist(llparms$zi.pi)), log(unlist(llparms$tr.S.pop)), na.rm = TRUE)
+        if(ome >= 1e-2) ome = ome * 0.6
+        else if (ome < 1e-2 & ome >= 1e-5) ome = ome * 5e-2
+        else if (ome < 1e-5 & ome > 1e-20) ome = ome * 1e-5
+        else break
+      }
+      llik0 <- llik1
+      oldgamm <- newgamm
+    }#inner
+    R.pen = mapply(function(a,b,c) (t(a) %*% b %*% a)*c, oldtheta, R.mat,
+                   oldlambda, SIMPLIFY = FALSE)
+    llik1 = sum(log(unlist(llparms$te.h.q)+1e-12),
+                -unlist(llparms$te.H.qr), log(unlist(llparms$ti.F.q)+1e-12),
+                -sum(unlist(R.pen)), log(unlist(llparms$ze.pi)),
+                log(unlist(llparms$zi.pi)), log(unlist(llparms$tr.S.pop)), na.rm = TRUE)
+  }#outer
+
+
 }
+
+
+
+
+
+
+
+
+
+
