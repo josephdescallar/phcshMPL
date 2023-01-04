@@ -999,8 +999,8 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         betaparms = updscorebeta(llparms$ti.h.q, llparms$ti.S.gq.q,
                     base$ti.gq.H0.qr, llparms$xi.exb.qr, ti.rml.gq.w)
         betascore.mat[[r]] = diag(c(if(length(tr)!=0) -llparms$pi.zr[[r]] *
-                            llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] /
-                            llparms$tr.Sr.pop.r[[r]], rep(1, n.e[[r]]),
+                            llparms$tr.H.q[[r]] * llparms$tr.S[[r]] /
+                            llparms$tr.S.pop[[r]], rep(1, n.e[[r]]),
                             unlist(mapply(function(a,b)
                              if(a!=0) -b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
                              FALSE)), unlist(mapply(function(a,b,c)
@@ -1009,10 +1009,10 @@ phcshcf_mpl <- function(formula, risk, z, data, control, ...){
         betascore[[r]] = t(betascore.X[[r]]) %*% betascore.mat[[r]] %*%
                         betascore.1[[r]]
         betahess.mat[[r]] = diag(c(if(length(tr)!=0) (llparms$pi.zr[[r]] *
-                            llparms$tr.H.q[[r]] * llparms$tr.Sr.r[[r]] *
-                            (llparms$tr.Sr.pop.r[[r]] * (llparms$tr.H.q[[r]]
-                            - 1) - llparms$pi.zr[[r]] * llparms$tr.Sr.r[[r]] *
-                            llparms$tr.H.q[[r]])) / llparms$tr.Sr.pop.r[[r]]^2,
+                            llparms$tr.H.q[[r]] * llparms$tr.S[[r]] *
+                            (llparms$tr.S.pop[[r]] * (llparms$tr.H.q[[r]]
+                            - 1) - llparms$pi.zr[[r]] * llparms$tr.S[[r]] *
+                            llparms$tr.H.q[[r]])) / llparms$tr.S.pop[[r]]^2,
                             unlist(mapply(function(a,b)
                             if(a!=0) b[[r]], n.e, llparms$te.H.qr, SIMPLIFY =
                             FALSE)),  unlist(mapply(function(a,b,c) if(a!=0)
