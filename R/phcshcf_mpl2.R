@@ -92,7 +92,7 @@ phcshcf_mpl2 <- function(formula, risk, z, data, control, ...){
   mean_o = c(0,apply(Z[,-1], 2, mean))
   ZC = Z - rep(mean_o, each = n)
   data.export = data.frame(y,X,Z,risk)
-  data.all = data.frame(y,XC,risk,ZC)
+  data.all = data.frame(y,X,risk,Z)
   data.all[,1][,2] = ifelse(data.all[,1][,3]==2,
                             data.all[,1][,1],data.all[,1][,2])
   data.all[,1][,1] = ifelse(data.all[,1][,3]==2, 0, data.all[,1][,1])
@@ -423,7 +423,7 @@ phcshcf_mpl2 <- function(formula, risk, z, data, control, ...){
       #                        * (1+llparms$zr.ezg)^2), if(sum(unlist(n.e))!=0) 1 /
       #                       (1 + unlist(llparms$ze.ezg)), if(sum(unlist(n.i))!=0) 1 /
       #                       (1 + unlist(llparms$zi.ezg))))
-      gammascore.mat <- diag(c(if(n.r!=0) ((llparms$tr.S - 1) *
+      gammascore.mat2 <- diag(c(if(n.r!=0) ((llparms$tr.S - 1) *
                         llparms$zr.pi*(1 - llparms$zr.pi)) / (1-llparms$zr.pi +
                         llparms$zr.pi*llparms$tr.S), if(sum(unlist(n.e))!=0) 1 /
                         (1 + unlist(llparms$ze.ezg)), if(sum(unlist(n.i))!=0) 1 /
@@ -431,7 +431,7 @@ phcshcf_mpl2 <- function(formula, risk, z, data, control, ...){
       # gammascore.mat <- diag(c(if(n.r!=0) ((llparms$tr.S - 1) *
       #                   llparms$zr.ezg) / (llparms$tr.S.pop
       #                   * (1+llparms$zr.ezg)^2)))
-      gammascore <- t(gammascore.z) %*% gammascore.mat %*%
+      gammascore <- t(gammascore.z) %*% gammascore.mat2 %*%
                     data.matrix(gammascore.1)
       # gammahess.mat <- diag(c(if(n.r!=0) -((llparms$tr.S- 1) *
       #                  llparms$zr.ezg * (llparms$tr.S.pop *
@@ -444,14 +444,14 @@ phcshcf_mpl2 <- function(formula, risk, z, data, control, ...){
       #                  (1 + unlist(llparms$ze.ezg))^2,
       #                  if(sum(unlist(n.i))!=0) unlist(llparms$zi.ezg)/
       #                  (1 + unlist(llparms$zi.ezg))^2))
-      gammahess.mat <- diag(c(if(n.r!=0) -((llparms$tr.S- 1)*(llparms$zr.pi*(1 -
-                  llparms$zr.pi)^3 - llparms$zr.pi^3*(1 - llparms$zr.pi)*llparms$tr.S)) /
-                    (1 - llparms$zr.pi + llparms$zr.pi*llparms$tr.S),
+      gammahess.mat2 <- diag(c(if(n.r!=0) ((llparms$tr.S- 1)*(llparms$zr.pi*(1 -
+                  llparms$zr.pi)^3)) /
+                    (1 - llparms$zr.pi + llparms$zr.pi*llparms$tr.S)^2,
                           if(sum(unlist(n.e))!=0) unlist(llparms$ze.ezg)/
                             (1 + unlist(llparms$ze.ezg))^2,
                           if(sum(unlist(n.i))!=0) unlist(llparms$zi.ezg)/
                             (1 + unlist(llparms$zi.ezg))^2))
-      gammahess <- solve(t(gammascore.z) %*% gammahess.mat %*%
+      gammahess <- solve(t(gammascore.z) %*% gammahess.mat2 %*%
                                 gammascore.z)
       gammainc <- gammahess %*% gammascore
       newgamm = oldgamm + as.vector(gammainc)
@@ -633,7 +633,7 @@ phcshcf_mpl2 <- function(formula, risk, z, data, control, ...){
       if(((max(mapply(function(a,b) abs(a - b), oldbeta, prev.oldbeta)) <
            control$inner.conv) & (max(mapply(function(a,b) max(abs(a - b)),
            oldtheta, prev.oldtheta)) < control$inner.conv) &
-          (max(mapply(function(a,b) max(abs(a - b)), oldgamm, prev.oldgamm))))){
+          (max(mapply(function(a,b) max(abs(a - b)), oldgamm, prev.oldgamm)) < control$inner.conv))){
         break
       }
     }#inner
