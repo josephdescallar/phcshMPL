@@ -51,6 +51,6 @@ summary_phcsh_mpl <- function(object, sand = FALSE){
   if(object$cf==1){
     out <- list(gamma=matzG, risks=risks)
   }
-  out <- list(risks=risks)
+  else {out <- list(risks=risks)}
   out
 }
