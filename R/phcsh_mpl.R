@@ -34,8 +34,6 @@
 #' @return an object of class phcsh_mpl representing the fit. See
 #' phcsh_mpl.object for defaults
 #'
-#' @importFrom survival Surv
-#'
 phcsh_mpl <- function(formula, data, risk, z=NULL, control, ...){
   if(is.null(z)){
     fit <- phcsh_mpl_func(formula, risk, data, control, ...)
