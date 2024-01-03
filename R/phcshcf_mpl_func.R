@@ -1253,6 +1253,7 @@ phcshcf_mpl_func <- function(formula, risk, z, data, control, ...){
   fit$n.e = n.e
   fit$n.i = n.i
   fit$hessian = hessian
+  class(fit) = "phcsh_mpl"
   fit
 }
 
