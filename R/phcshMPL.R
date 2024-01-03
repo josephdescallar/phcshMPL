@@ -1,5 +1,11 @@
-#' test my title 2
+#' foo: A package for computating the notorious bar statistic.
 #'
-#' test my documentation multiple
-#' plus 1
-#' plus2
+#' The foo package provides three categories of important functions:
+#' foo, bar and baz.
+#'
+#' @section Foo functions:
+#' The foo functions ...
+#'
+#' @docType package
+#' @name foo
+NULL
