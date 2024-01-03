@@ -36,7 +36,7 @@
 #'
 #' @importFrom survival Surv
 #'
-phcsh_mpl <- function(formula, data, z=NULL, risk, control, ...){
+phcsh_mpl <- function(formula, data, risk, z=NULL, control, ...){
   if(is.null(z)){
     phcsh_mpl_func(formula, risk, data, control, ...)
   }

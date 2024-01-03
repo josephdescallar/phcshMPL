@@ -1221,6 +1221,7 @@ phcshcf_mpl_func <- function(formula, risk, z, data, control, ...){
   fit$n.r = n.r
   fit$n.e = n.e
   fit$n.i = n.i
+  class(fit) = "phcsh_mpl"
   fit
 }
 
