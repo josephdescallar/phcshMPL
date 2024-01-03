@@ -9,7 +9,7 @@
 #' fitted Cox proportional hazard model.
 #' @param sand use sandwich estimates of standard error
 #' @export
-summary_phcsh_mpl <- function(object, sand = FALSE){
+summary_phcsh_mpl <- function(object, sand = FALSE, grad=FALSE){
   if(sand == FALSE){
     col.names = c("Estimate", "Std. Error", "z-value", "Pr(>|z|)",
                 "Gradient")
@@ -47,6 +47,10 @@ summary_phcsh_mpl <- function(object, sand = FALSE){
     dimnames(matxB) = list(paste(" ", var.names, sep = ""),col.names)
     colnames(matxT) = col.names
     risks[[r]] = list(Beta = matxB, Theta = matxT)
+  }
+  if(grad==FALSE){
+    matzG=matzG[,-ncol(matzG)]
+    risks=risks[,-ncol(risks)]
   }
   if(object$cf==1){
     out <- list(gamma=matzG, risks=risks)
