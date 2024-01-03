@@ -4,13 +4,9 @@
 \name{phcshMPL-package}
 \alias{phcshMPL}
 \alias{phcshMPL-package}
-\title{test me titel}
+\title{phcshMPL: Penalised Maximum Likelihood for Competing Risk Survival Analysis Models}
 \description{
-Estimate the regression coefficients and the baseline hazard of proportional
-hazard Cox models for competing risks data with left, right or interval
-censored survival data using maximum penalised likelihood.
-A 'non-parametric' smooth estimate of the baseline hazard function is
-provided test 2
+Estimate the regression coefficients and the baseline hazard of proportional hazard Cox models for competing risks data with left, right or interval censored survival data using maximum penalised likelihood. A 'non-parametric' smooth estimate of the baseline hazard function is provided.
 }
 \author{
 \strong{Maintainer}: Joseph Descallar \email{jdescallar17@gmail.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
