@@ -4,7 +4,7 @@
 \alias{phcsh_mpl}
 \title{Fit Cause Specific Proportional Hazards Regression Model Via MPL}
 \usage{
-phcsh_mpl(formula, data, z = NULL, risk, control, ...)
+phcsh_mpl(formula, data, risk, z = NULL, control, ...)
 }
 \arguments{
 \item{formula}{a formula object, with the response on the left of a ~
@@ -16,13 +16,13 @@ interval censored data).}
 argument. If no dataset is indicated, variables will be taken from the global
 environment.}
 
+\item{risk}{a numeric vector which contains the risk/failure for the
+i-th observation in the data frame.}
+
 \item{z}{an optional data frame which contains the covariate to be used when
 a cure fraction is specified. If left NULL, then no cure fraction is assumed,
 otherwise parameter estimation will occur for a cure fraction based on
 the specified variables.}
-
-\item{risk}{a numeric vector which contains the risk/failure for the
-i-th observation in the data frame.}
 
 \item{control}{object of class phcsh_mpl_control specifying control options
 such smoothing parameter value, iteration numbers. Refer to
