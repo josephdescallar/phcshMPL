@@ -1,3 +1,4 @@
+#' @export
 phcsh_mpl_func <- function(formula, risk, data, control, ...){
   mc = match.call(expand.dots = FALSE)
   m = match(c("formula", "data"), names(mc), 0)
