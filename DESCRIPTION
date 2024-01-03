@@ -1,10 +1,14 @@
 Package: phcshMPL
-Title: What the Package Does (One Line, Title Case)
+Title: Penalised Maximum Likelihood for Competing Risk Survival Analysis Models
 Version: 0.0.0.9000
 Authors@R: 
     person("Joseph", "Descallar", , "jdescallar17@gmail.com", 
     role = c("aut", "cre"), comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: Estimate the regression coefficients and the baseline hazard
+    of proportional hazard Cox models for competing risks data with left, right 
+    or interval censored survival data using maximum penalised likelihood. 
+    A 'non-parametric' smooth estimate of the baseline hazard
+    function is provided.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
