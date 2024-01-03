@@ -7,15 +7,13 @@
 summary_phcshcf_mpl(object, sand = FALSE)
 }
 \arguments{
-\item{object}{An object inheriting from class coxph_mpl, representing a
-fitted Cox proportional hazard model.}
+\item{object}{An object inheriting from class phcsh_mpl, representing a
+fitted proportional hazards cause specific model.}
 
 \item{sand}{use sandwich estimates of standard error}
 }
 \description{
-Additional information about the Cox proportional hazard model fit
+Additional information about the cause-specifics hazard model fit
 represented by object is extracted and included in the returned object,
-which is suitable for printing with the generic print function. The generic
-coef function will extract the matrix of coefficients of interest with
-standard errors, zz-statistics and p-values.
+which is suitable for printing with the generic print function.
 }

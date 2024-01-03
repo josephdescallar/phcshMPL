@@ -4,7 +4,7 @@
 #' Simultaneously estimate the regression coefficients and the baseline hazard
 #' function of proportional hazard Cause specific hazards models for competing
 #' risks with or without a cure fraction using maximum penalized likelihood
-#' (MPL).
+#' (MPL)
 #'
 #' @param formula a formula object, with the response on the left of a ~
 #' operator, and the terms on the right. The response must be a survival object
@@ -20,17 +20,25 @@
 #' the specified variables.
 #'
 #' @param data a data frame that includes the variables named in the formula
-#' argument
+#' argument. If no dataset is indicated, variables will be taken from the global
+#' environment.
 #'
-#' @param control test
-#' @param ... Other arguments. In coxph_mpl, these elements, will be passed to
+#' @param control object of class phcsh_mpl_control specifying control options
+#' such smoothing parameter value, iteration numbers. Refer to
+#' phcsh_mpl_control for defaults
+#'
+#' @param ... Other arguments. In coxph_mpl, these elements will be passed to
 #' coxph_mpl_control. In print.coxph_mpl, these elements will be passed to the
 #' print function.
-#' @return A character vector.
+#'
+#' @return an object of class phcsh_mpl representing the fit. See
+#' phcsh_mpl.object for defaults
+#'
 #' @importFrom survival Surv
+#'
 phcsh_mpl <- function(formula, data, z=NULL, risk, control, ...){
   if(is.null(z)){
-    phcsh_mpl3(formula, risk, data, control, ...)
+    phcsh_mpl_func(formula, risk, data, control, ...)
   }
-  else phcshcf_mpl2(formula, risk, z, data, control, ...)
+  else phcshcf_mpl_func(formula, risk, z, data, control, ...)
 }

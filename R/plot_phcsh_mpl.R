@@ -1,4 +1,4 @@
-#' Plot a phcsh_mpl Object
+#' Plot a phcsh_mpl object
 #'
 #' Plot the bases used to estimate the baseline hazard parameters, as well as
 #' the estimate and confidence interval of the baseline hazard, cumulative
@@ -8,10 +8,18 @@
 #' @param object an object inheriting from class coxph_mpl, representing a
 #' fitted cause specific proportional hazards model.
 #'
-#' @param risk specificy risk
-#' @param plots which type of plot to produce
+#' @param risk a number which specifies which risk  to plot from phcsh_mpl
+#' object
+#'
+#' @param plots determines which type of plot to produce. bh refers to baseline
+#' hazard plot. surv refers to survival plot, and cif refers to cumulative
+#' incidence function plot. If none are specified, then all three plots are
+#' displayed.
+#'
 #' @param sand use sandwich estimates of standard error
-#' @param n.points number of points to use for plot
+#'
+#' @param n.points number of points to use for plot. Deafult is n = 1000.
+#'
 #' @export
 plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
                   sand = FALSE, n.points = 1000){
