@@ -17,7 +17,8 @@
 #' @param n.points number of points to use for plot. Deafult is n = 1000.
 #'
 #' @export
-pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
+pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE,
+                  risk=1){
   r = risk
   psif <- function(x, bknots, iknots){
     splines2::mSpline(x, knots = iknots, Boundary = bknots, degree = object$dgr,
@@ -115,7 +116,7 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
       pred.F0r.S0qt.gq[[gq]]
     pred.F0r.dhdT.gq[[gq]] <- pred.F0r.psi.gq[[gq]]
     pred.F0r.dSdT.gq[[gq]] <- -pred.F0r.PSI.gq[[gq]] *
-      as.vector(plot.F0r.S0qt.gq[[gq]])
+      as.vector(pred.F0r.S0qt.gq[[gq]])
     pred.F0r.dFdT.gqT[[gq]] <- (as.matrix(pred.F0r.dhdT.gq[[gq]] *
     as.vector(pred.F0r.S0qt.gq[[gq]]) + as.vector(pred.F0r.h0qt.gq[[gq]]) *
     as.matrix(pred.F0r.dSdT.gq[[gq]]))) * object$weights[gq]
@@ -136,10 +137,10 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
     pred.F0r.upper <- exp(pred.F0r.logOR.upper) /
     (1 + exp(pred.F0r.logOR.upper))
   }
-  predValues <- list("t.points"=t.points, "plot.h0r"=plot.h0r,
-  "plot.h0r.lower"=plot.h0r.lower, "plot.h0r.upper"=plot.h0r.upper,
-  "plot.S0r"=plot.S0r, "plot.S0r.lower"=plot.S0r.lower,
-  "plot.S0r.upper"=plot.S0r.upper, "F0r"=plot.F0r,
-  "plot.F0r.lower"=plot.F0r.lower, "plot.F0r.upper"=plot.F0r.upper)
+  predValues <- list("t.points"=t.points, "pred.h0r"=pred.h0r,
+  "pred.h0r.lower"=pred.h0r.lower, "pred.h0r.upper"=pred.h0r.upper,
+  "pred.S0r"=pred.S0r, "pred.S0r.lower"=pred.S0r.lower,
+  "pred.S0r.upper"=pred.S0r.upper, "pred.F0r"=pred.F0r,
+  "pred.F0r.lower"=plot.F0r.lower, "pred.F0r.upper"=plot.F0r.upper)
   return(predValues)
 }
