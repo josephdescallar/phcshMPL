@@ -141,6 +141,6 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk=1, n.points=1000,
   "pred.h0r.lower"=pred.h0r.lower, "pred.h0r.upper"=pred.h0r.upper,
   "pred.S0r"=pred.S0r, "pred.S0r.lower"=pred.S0r.lower,
   "pred.S0r.upper"=pred.S0r.upper, "pred.F0r"=pred.F0r,
-  "pred.F0r.lower"=plot.F0r.lower, "pred.F0r.upper"=plot.F0r.upper)
+  "pred.F0r.lower"=pred.F0r.lower, "pred.F0r.upper"=pred.F0r.upper)
   return(predValues)
 }
