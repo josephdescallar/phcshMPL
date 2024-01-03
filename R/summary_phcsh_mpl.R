@@ -20,6 +20,12 @@ summary_phcsh_mpl <- function(object, sand = FALSE){
   }
   var.names = dimnames(object$data$X)[[2]]
   risks = list()
+  if(object$cf==1){
+  matzG = cbind(object$"gamma",object$seG, object$"gamma" /
+          object$seG,2*(1-stats::pnorm(abs(object$"gamma" /
+          object$seG))), object$gamma.gradient)
+  colnames(matzG) = col.names
+  }
   for(r in 1:object$n.risk){
     if(sand == FALSE){
       matxB = cbind(object$"beta"[[r]],object$seB[[r]], object$"beta"[[r]] /
@@ -41,6 +47,9 @@ summary_phcsh_mpl <- function(object, sand = FALSE){
     dimnames(matxB) = list(paste(" ", var.names, sep = ""),col.names)
     colnames(matxT) = col.names
     risks[[r]] = list(Beta = matxB, Theta = matxT)
+  }
+  if(object$cf==1){
+    out <- list(gamma=matzG, risks=risks)
   }
   out <- list(risks=risks)
   out
