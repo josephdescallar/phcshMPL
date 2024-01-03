@@ -38,7 +38,8 @@
 #'
 phcsh_mpl <- function(formula, data, risk, z=NULL, control, ...){
   if(is.null(z)){
-    phcsh_mpl_func(formula, risk, data, control, ...)
+    fit <- phcsh_mpl_func(formula, risk, data, control, ...)
   }
-  else phcshcf_mpl_func(formula, risk, z, data, control, ...)
+  else fit <- phcshcf_mpl_func(formula, risk, z, data, control, ...)
+  fit
 }
