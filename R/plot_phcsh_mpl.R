@@ -199,16 +199,11 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
     if(object$pos.def==1) plot.cif(plot.F0r, plot.F0r.lower, plot.F0r.upper)
     else plot.cif(plot.F0r)
   }
-  rlist <- list("plot.F0r.r.var"=plot.F0r.r.var, "plot.F0r.upper"=plot.F0r.upper,
-  "plot.F0r.lower"=plot.F0r.lower, "plot.S0r.var"=plot.S0r.var,
-  "plot.S0r.logOR.var"=plot.S0r.logOR.var,
-  "plot.F0r.logOR.var"=plot.F0r.logOR.var, "t.points"=t.points, "F0r"=plot.F0r,
-  "t.F.q"=t.F.q, "t.S.q"=t.S.q, "t.h0.q.sum"=t.h0.q.sum, "t.H0.q"=t.H0.q,
-  "t.h0.q"=t.h0.q, "plot.S0r"=plot.S0r, "plot.S0r.lower"=plot.S0r.lower,
-  "plot.S0r.upper"=plot.S0r.upper, "plot.h0r"=plot.h0r, "plot.h0r.lower"=plot.h0r.lower,
-  "plot.h0r.upper"=plot.h0r.upper)
-  return(rlist)
-  invisible(rlist)
+  plotValue <- list("t.points"=t.points, "plot.h0r"=plot.h0r,
+  "plot.h0r.lower"=plot.h0r.lower, "plot.h0r.upper"=plot.h0r.upper,
+  "plot.S0r"=plot.S0r, "plot.S0r.lower"=plot.S0r.lower,
+  "plot.S0r.upper"=plot.S0r.upper, "F0r"=plot.F0r,
+  "plot.F0r.lower"=plot.F0r.lower, "plot.F0r.upper"=plot.F0r.upper)
 }
 
 
