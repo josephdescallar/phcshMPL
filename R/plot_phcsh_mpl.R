@@ -208,6 +208,7 @@ plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
   "plot.S0r.upper"=plot.S0r.upper, "plot.h0r"=plot.h0r, "plot.h0r.lower"=plot.h0r.lower,
   "plot.h0r.upper"=plot.h0r.upper)
   return(rlist)
+  invisible(rlist)
 }
 
 
