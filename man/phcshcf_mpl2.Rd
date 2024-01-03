@@ -32,5 +32,5 @@ A character vector.
 Simultaneously estimate the regression coefficients and the baseline hazard
 function of proportional hazard Cause specific hazards models for competing
 risks with a cure fraction for at least one risk using maximum penalised
-likelihood (MPL).
+likelihood (MPL)
 }
