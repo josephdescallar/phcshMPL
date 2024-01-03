@@ -1,4 +1,7 @@
 #' @keywords internal
+#' @description
+#' test me description
+#'
 "_PACKAGE"
 
 ## usethis namespace: start
