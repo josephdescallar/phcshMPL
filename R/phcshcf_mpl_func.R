@@ -1,10 +1,12 @@
+#' @title
 #' Fit Cause Specific Proportional Hazards Regression Model with a cure fraction
 #'  Via MPL
 #'
+#' @description
 #' Simultaneously estimate the regression coefficients and the baseline hazard
 #' function of proportional hazard Cause specific hazards models for competing
 #' risks with a cure fraction for at least one risk using maximum penalised
-#' likelihood (MPL).
+#' likelihood (MPL)
 #'
 #' @param formula a formula object, with the response on the left of a ~
 #' operator, and the terms on the right. The response must be a survival object

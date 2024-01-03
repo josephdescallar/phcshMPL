@@ -1,5 +1,6 @@
 #' Fit Cause Specific Proportional Hazards Regression Model Via MPL
 #'
+#' @description
 #' Simultaneously estimate the regression coefficients and the baseline hazard
 #' function of proportional hazard Cause specific hazards models for competing
 #' risks with or without a cure fraction using maximum penalized likelihood
