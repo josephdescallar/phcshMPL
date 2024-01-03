@@ -27,7 +27,7 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
   }
   t.points = seq(object$b.knots[1], object$b.knots[2], length.out = n.points)
   pred.psi = psif(t.points, object$b.knots, object$i.knots[[r]])
-  if(covs=NULL){
+  if(is.null(covs)){
     pred.h0r = pred.psi %*% object$"theta"[[r]]
   }
   else{
@@ -51,7 +51,7 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
   }
   #Baseline survival
   pred.PSI = PSIf(t.points, object$b.knots, object$i.knots[[r]])
-  if(covs=NULL){
+  if(is.null(covs)){
     pred.S0r = exp(-(pred.PSI %*% object$"theta"[[r]]))
   }
   else {
@@ -85,7 +85,7 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
     object$i.knots[[r]])
     pred.F0r.PSI.gq[[gq]] <- PSIf(t.gq.change[,gq], object$b.knots,
     object$i.knots[[r]])
-    if(covs=NULL){
+    if(is.null(covs)){
       pred.F0r.h0qt.gq[[gq]] <- (psif(t.gq.change[,gq], object$b.knots,
       object$i.knots[[r]]) %*% object$"theta"[[r]])
     }
@@ -96,7 +96,7 @@ pred_phcsh_mpl <- function(object, covs=NULL, risk, n.points=1000, sand=FALSE){
     }
     pred.F0r.H0qt.gq.r = pred.F0r.S0qt.gq.r = list()
     for(q in 1:object$n.risk){
-      if(covs=NULL){
+      if(is.null(covs)){
         pred.F0r.H0qt.gq.r[[q]] = PSIf(t.gq.change[,gq], object$b.knots,
         object$i.knots[[q]]) %*% object$"theta"[[q]]
       }
