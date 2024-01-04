@@ -13,7 +13,7 @@ control.phcsh_mpl(
   max.iter = 10000L,
   lambda,
   n.basis = NULL,
-  iter.disp = TRUE,
+  iter.disp = FALSE,
   iknots.pos = NULL,
   aps = TRUE,
   tmid = TRUE,
