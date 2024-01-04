@@ -21,7 +21,7 @@
 #' @param n.points number of points to use for plot. Deafult is n = 1000.
 #'
 #' @export
-plot_phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
+plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
                   sand = FALSE, n.points = 1000){
   r = risk
   if("bh" %in% plots) bh = 1

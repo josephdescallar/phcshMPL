@@ -40,7 +40,7 @@
 #' iterative algorithm for model fit.
 #'
 #' @export
-phcsh_mpl_control <- function(knots.perc.limit = c(0.05,0.95), gq.points = 15,
+control.phcsh_mpl <- function(knots.perc.limit = c(0.05,0.95), gq.points = 15,
                      dgr = 2, basis.intercept = FALSE, max.outer = 100L,
                      max.iter = 10000L, lambda, n.basis = NULL,
                      iter.disp = TRUE, iknots.pos = NULL, aps = TRUE,

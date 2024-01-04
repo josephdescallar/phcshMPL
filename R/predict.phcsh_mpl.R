@@ -17,7 +17,7 @@
 #' @param n.points number of points to use for plot. Deafult is n = 1000.
 #'
 #' @export
-pred_phcsh_mpl <- function(object, covs=NULL, risk=1, n.points=1000,
+predict.phcsh_mpl <- function(object, covs=NULL, risk=1, n.points=1000,
                   sand=FALSE){
   r = risk
   psif <- function(x, bknots, iknots){

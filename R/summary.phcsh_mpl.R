@@ -12,7 +12,7 @@
 #' @param sand use sandwich estimates of standard error
 #'
 #' @export
-summary_phcsh_mpl <- function(object, sand = FALSE, grad=FALSE){
+summary.phcsh_mpl <- function(object, sand = FALSE, grad=FALSE){
   if(sand == FALSE){
     col.names = c("Estimate", "Std. Error", "z-value", "Pr(>|z|)",
                 "Gradient")
