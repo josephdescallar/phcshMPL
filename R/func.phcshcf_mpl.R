@@ -42,14 +42,14 @@ phcshcf_mpl_func <- function(formula, risk, z, data, control, ...){
   n = nrow(mf)
   extraArgs <- list(...)
   if(length(extraArgs)){
-    controlArgs <- names(formals(phcshcf_mpl_control))
+    controlArgs <- names(formals(control.phcshcf_mpl))
     m <- pmatch(names(extraArgs), controlArgs, nomatch = 0L)
     if (any(m == 0L))
       stop(gettextf("Argument(s) %s not matched", names(extraArgs)[m ==
                                                                      0L]), domain = NA, call. = F)
   }
   if(missing(control))
-    control <- phcshcf_mpl_control(...)
+    control <- control.phcshcf_mpl(...)
   index = as.vector(row(mf)[,1])
   X = stats::model.matrix(mt, mf)
   X = X[, !apply(X, 2, function(x) all(x == x[1])), drop = FALSE]
