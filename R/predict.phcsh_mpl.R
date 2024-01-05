@@ -16,7 +16,7 @@
 #'
 #' @param n.points number of points to use for plot. Deafult is n = 1000.
 #'
-#' @export
+#' @export predict.phcsh_mpl
 predict.phcsh_mpl <- function(object, covs=NULL, risk=1, n.points=1000,
                   sand=FALSE){
   r = risk
