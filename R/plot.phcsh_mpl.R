@@ -160,6 +160,15 @@ plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
     plot.F0r = pred$plot.F0r
     plot.F0r.lower = pred$plot.F0r.lower
     plot.F0r.upper = pred$plot.F0r.upper
+    plot.h0r[is.infinite(plot.h0r)] <- NA
+    plot.h0r.lower[is.infinite(plot.h0r.lower)] <- NA
+    plot.h0r.upper[is.infinite(plot.h0r.upper)] <- NA
+    plot.S0r[is.infinite(plot.S0r)] <- NA
+    plot.S0r.lower[is.infinite(plot.S0r.lower)] <- NA
+    plot.S0r.upper[is.infinite(plot.S0r.upper)] <- NA
+    plot.F0r[is.infinite(plot.F0r)] <- NA
+    plot.F0r.lower[is.infinite(plot.F0r.lower)] <- NA
+    plot.F0r.upper[is.infinite(plot.F0r.upper)] <- NA
   }
   plot.bh = function(h0,low=NULL,up=NULL){
     if(object$pos.def==1){
