@@ -150,7 +150,7 @@ plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
   # t.H0.q <- PSIf(t.points, object$b.knots, object$i.knots[[risk]]) %*% object$theta[[risk]]
 
   else{
-    t.points = pred$t.points
+    t.points = pred$t
     plot.h0r = pred$pred.h0r
     plot.h0r.lower = pred$pred.h0r.lower
     plot.h0r.upper = pred$pred.h0r.upper
