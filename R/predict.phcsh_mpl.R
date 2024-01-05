@@ -142,5 +142,8 @@ predict.phcsh_mpl <- function(object, covs=NULL, risk=1, n.points=1000,
   "pred.S0r"=pred.S0r, "pred.S0r.lower"=pred.S0r.lower,
   "pred.S0r.upper"=pred.S0r.upper, "pred.F0r"=pred.F0r,
   "pred.F0r.lower"=pred.F0r.lower, "pred.F0r.upper"=pred.F0r.upper)
+  colnames(predValues) <- c("t", "pred.h0r", "pred.h0r.lower", "pred.h0r.upper",
+  "pred.S0r", "pred.S0r.lower", "pred.S0r.upper", "pred.F0r", "pred.F0r.lower",
+  "pred.F0r.upper")
   return(predValues)
 }
