@@ -191,7 +191,8 @@ fit.phcsh_mpl <- function(formula, risk, data, control, ...){
     else NA
     te.psi[[q]] = if(n.e[[q]]!=0) psif(te[[q]], b.knots, i.knots[[q]])
     else NA
-    oldlambda[[q]] = control$lambda[q]
+    if(is.null(control$lambda)) oldlambda[[q]] = 1e-5
+    else oldlambda[[q]] = control$lambda[q]
   }
   n.e.all = sum(unlist(n.e))
   n.i.all = sum(unlist(n.i))
