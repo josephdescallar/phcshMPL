@@ -9,7 +9,8 @@
   risk = 1,
   plots = c("bh", "surv", "cif"),
   sand = FALSE,
-  n.points = 1000
+  n.points = 1000,
+  pred = NULL
 )
 }
 \arguments{
