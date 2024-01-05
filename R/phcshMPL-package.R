@@ -2,6 +2,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @import splines2
+#' @importFrom splines2 mSpline
+#' @importFrom splines2 iSpline
 ## usethis namespace: end
 NULL
