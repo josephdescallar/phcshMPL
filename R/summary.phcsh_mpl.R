@@ -57,7 +57,7 @@ summary.phcsh_mpl <- function(object, sand = FALSE, grad=FALSE){
       risks[[r]] = list(Beta = matxB, Theta = matxT)
     }
   }
-  if(grad==FALSE){
+  if(grad==FALSE & object$cf==1){
     matzG=matzG[,-ncol(matzG)]
   }
   if(object$cf==1){
