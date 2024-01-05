@@ -1,10 +1,10 @@
-#' Function file for cshcf mpl
+#' Function file for phcsh_mpl
 #'
 #' This is the function file for model fit for cause-specific hazards model
 #' with a cure model using maximum penalized likelihood estimation.
 #'
 #' @export
-func.phcshcf_mpl <- function(formula, risk, z, data, control, ...){
+fit.phcshcf_mpl <- function(formula, risk, z, data, control, ...){
   mc = match.call(expand.dots = FALSE)
   m = match(c("formula", "data"), names(mc), 0)
   mc = mc[c(1, m)]
