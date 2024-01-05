@@ -41,8 +41,8 @@
 #'
 #' @export
 control.phcsh_mpl <- function(knots.perc.limit = c(0.05,0.95), gq.points = 15,
-                     dgr = 2, basis.intercept = FALSE, max.outer = 100L,
-                     max.iter = 10000L, lambda, n.basis = NULL,
+                     dgr = 2, basis.intercept = FALSE, max.outer = 10L,
+                     max.iter = 3000L, lambda=NULL, n.basis = NULL,
                      iter.disp = FALSE, iknots.pos = NULL, aps = TRUE,
                      tmid = TRUE, inner.conv = 1e-8){
 
