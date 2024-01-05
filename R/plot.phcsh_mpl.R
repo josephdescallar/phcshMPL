@@ -22,8 +22,9 @@
 #'
 #' @export plot.phcsh_mpl
 plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
-                  sand = FALSE, n.points = 1000){
+                  sand = FALSE, n.points = 1000, pred=NULL){
   r = risk
+  if(is.null(pred)){
   if("bh" %in% plots) bh = 1
   else bh = 0
   if("surv" %in% plots) surv = 1
@@ -119,6 +120,7 @@ plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
     plot.F0r.lower <- exp(plot.F0r.logOR.lower) / (1 + exp(plot.F0r.logOR.lower))
     plot.F0r.upper <- exp(plot.F0r.logOR.upper) / (1 + exp(plot.F0r.logOR.upper))
   }
+  }
 
   #Cumulative incidence function
   # bma = (t.points - object$b.knots[1]) / 2
@@ -146,6 +148,18 @@ plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
   # t.h0.q.sum = rowSums(t.h0.q * t.bma.gq.w)
   # t.H0.q <- PSIf(t.points, object$b.knots, object$i.knots[[risk]]) %*% object$theta[[risk]]
 
+  else{
+    t.points = pred$t.points
+    plot.h0r = pred$plot.h0r
+    plot.h0r.lower = pred$plot.h0r.lower
+    plot.h0r.upper = pred$plot.h0r.upper
+    plot.S0r = pred$plot.S0r
+    plot.S0r.lower = pred$plot.S0r.lower
+    plot.S0r.upper = pred$plot.S0r.upper
+    plot.F0r = pred$plot.F0r
+    plot.F0r.lower = pred$plot.F0r.lower
+    plot.F0r.upper = pred$plot.F0r.upper
+  }
   plot.bh = function(h0,low=NULL,up=NULL){
     if(object$pos.def==1){
       plot(t.points, h0, xlab = "t", main = paste("Risk", risk),
