@@ -24,7 +24,7 @@
 plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
                   sand = FALSE, n.points = 1000, pred=NULL){
   r = risk
-  if(is.null(pred)){
+
   if("bh" %in% plots) bh = 1
   else bh = 0
   if("surv" %in% plots) surv = 1
@@ -39,6 +39,7 @@ plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
     splines2::iSpline(x, knots = iknots, Boundary = bknots, degree = object$dgr,
             intercept = object$basis.intercept)
   }
+  if(is.null(pred)){
   t.points = seq(object$b.knots[1], object$b.knots[2], length.out = n.points)
   plot.psi = psif(t.points, object$b.knots, object$i.knots[[r]])
   plot.h0r = plot.psi %*% object$"theta"[[r]]
