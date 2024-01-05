@@ -151,15 +151,15 @@ plot.phcsh_mpl <- function(object,risk=1, plots = c("bh", "surv", "cif"),
 
   else{
     t.points = pred$t.points
-    plot.h0r = pred$plot.h0r
-    plot.h0r.lower = pred$plot.h0r.lower
-    plot.h0r.upper = pred$plot.h0r.upper
-    plot.S0r = pred$plot.S0r
-    plot.S0r.lower = pred$plot.S0r.lower
-    plot.S0r.upper = pred$plot.S0r.upper
-    plot.F0r = pred$plot.F0r
-    plot.F0r.lower = pred$plot.F0r.lower
-    plot.F0r.upper = pred$plot.F0r.upper
+    plot.h0r = pred$pred.h0r
+    plot.h0r.lower = pred$pred.h0r.lower
+    plot.h0r.upper = pred$pred.h0r.upper
+    plot.S0r = pred$pred.S0r
+    plot.S0r.lower = pred$pred.S0r.lower
+    plot.S0r.upper = pred$pred.S0r.upper
+    plot.F0r = pred$pred.F0r
+    plot.F0r.lower = pred$pred.F0r.lower
+    plot.F0r.upper = pred$pred.F0r.upper
     plot.h0r[is.infinite(plot.h0r)] <- NA
     plot.h0r.lower[is.infinite(plot.h0r.lower)] <- NA
     plot.h0r.upper[is.infinite(plot.h0r.upper)] <- NA
