@@ -4,7 +4,7 @@
 \alias{summary.phcsh_mpl}
 \title{Summarise a phcsh_mpl object}
 \usage{
-\method{summary}{phcsh_mpl}(object, sand = FALSE, grad = FALSE)
+summary.phcsh_mpl(object, sand = FALSE, grad = FALSE)
 }
 \arguments{
 \item{object}{An object inheriting from class coxph_mpl, representing a

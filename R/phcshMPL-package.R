@@ -2,7 +2,8 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom splines2 mSpline
-#' @importFrom splines2 iSpline
+#' @import splines2
+#' @import statmod
+#' @import Matrix
 ## usethis namespace: end
 NULL
